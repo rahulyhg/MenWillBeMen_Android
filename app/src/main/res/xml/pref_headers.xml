@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference  android:title="@string/pref_notifications"
+                        android:defaultValue="true"
+                        android:summary="Turn Notifications on or off"
+                        android:key="@string/pref_key_notifications" />
+
+    <!--<com.kizitonwose.colorpreference.ColorPreference-->
+        <!--android:defaultValue="@color/colorPrimary"-->
+        <!--android:key="@string/pref_key_theme_color"-->
+        <!--android:title="Theme"-->
+        <!--android:summary="Choose color from many"-->
+        <!--app:colorShape="circle"-->
+        <!--app:colorChoices="@array/androidcolors"-->
+        <!--app:viewSize="large"-->
+        <!--app:numColumns="5"-->
+        <!--app:showDialog="true"-->
+
+        <!--/>-->
+
+    <!--<CheckBoxPreference android:title="Font Size"-->
+                        <!--android:defaultValue="false"-->
+                        <!--android:summary="Select font size"-->
+                        <!--android:key="font_size" />-->
+
+    <ListPreference
+                        android:title="@string/pref_fontsize"
+                        android:summary="Select from 3 font sizes"
+                        android:key="@string/pref_key_fontsize"
+                        android:defaultValue="@string/pref_default_fontsize"
+                        android:entries="@array/FontSizesDescription"
+                        android:entryValues="@array/FontSizes"
+
+
+        />
+</PreferenceScreen>

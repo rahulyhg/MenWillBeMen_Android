@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+android:layout_height="wrap_content"
+android:orientation="horizontal"
+android:padding="@dimen/feed_item_status_pad_top"
+android:background="@color/colorWhite"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    >
+<Space
+    android:layout_weight="1"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"/>
+
+
+    <com.like.LikeButton
+        app:icon_type="thumb"
+        app:icon_size="@dimen/share_icon_size"
+        android:id="@+id/thumb_button"
+        android:layout_width="@dimen/share_icon_background"
+        android:layout_height="@dimen/share_icon_background"/>
+
+    <TextView
+        android:text="77"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:textSize="10sp"
+        android:padding="5dp"
+        android:id="@+id/count_likes"
+        />
+
+    <Space
+    android:layout_weight="1"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"/>
+
+    <com.mikepenz.iconics.view.IconicsImageView
+        android:layout_width="@dimen/share_icon_background"
+        android:layout_height="@dimen/share_icon_background"
+        app:iiv_icon="cmd_whatsapp"
+        app:iiv_size="@dimen/share_icon_size"
+        android:id="@+id/whatsapp_button"
+
+        />
+
+    <TextView
+        android:text="999"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/txtCountWhatsapp"
+
+        android:textSize="10sp"
+        android:padding="5dp" />
+
+<Space
+    android:layout_weight="1"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"/>
+<com.mikepenz.iconics.view.IconicsImageView
+    android:layout_width="@dimen/share_icon_background"
+    android:layout_height="@dimen/share_icon_background"
+    app:iiv_icon="cmd_share"
+    app:iiv_size="@dimen/share_icon_size"
+    android:id="@+id/share_button"
+
+    />
+    <TextView
+        android:text="99k"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/count_share"
+
+        android:textSize="10sp"
+        android:padding="5dp" />
+<Space
+    android:layout_weight="1"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"/>
+</LinearLayout>
+
+
+

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "274969105889",
+    "firebase_url": "https://menwillbemen-86782.firebaseio.com",
+    "project_id": "menwillbemen-86782",
+    "storage_bucket": "menwillbemen-86782.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274969105889:android:6d419677caea99e1",
+        "android_client_info": {
+          "package_name": "sourabh.menwillbemen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "274969105889-ucf4g6mtuvn3po5mba3341mgu09tuuhg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "sourabh.menwillbemen",
+            "certificate_hash": "972f2a6d86726cda795ba81b3af27bb6116582cc"
+          }
+        },
+        {
+          "client_id": "274969105889-8022sg8aubdikn7b1umc4kg5mn1p540v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbDksyodzXcshrfo5cu7piBq5Ml599RTw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "274969105889-8022sg8aubdikn7b1umc4kg5mn1p540v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
