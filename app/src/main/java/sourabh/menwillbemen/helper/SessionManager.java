@@ -50,6 +50,7 @@ public class SessionManager {
 	private static final String KEY_FIRST_RUN = "first_run";
 	private static final String KEY_LANGUAGES = "languages";
 	private static final String KEY_LANGUAGE_ID = "id";
+	private static final String KEY_FCM_TOKEN = "fcm_token";
 
 	private static final String KEY_CITY_NAME = "city_name";
 
@@ -192,6 +193,18 @@ public class SessionManager {
 	public String getBackgroundImage()
 	{
 		return pref.getString(KEY_BACKGROUND_IMAGE,KEY_BACKGROUND_IMAGE) ;
+
+	}
+
+	public void setFCMToken(String token){
+
+		editor.putString(KEY_FCM_TOKEN,token);
+		editor.commit();
+	}
+
+	public String getFCMToken()
+	{
+		return pref.getString(KEY_FCM_TOKEN,KEY_FCM_TOKEN) ;
 
 	}
 

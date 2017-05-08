@@ -112,7 +112,11 @@ public class AppConfig {
 	public static final String KEY_TITLE_LATEST = "LATEST";
 	public static final String KEY_TITLE_TOP50 = "TOP 50";
 	public static final String KEY_TITLE_TRENDING = "TRENDING";
-
+	public static final String KEY_REGISTRATION_COMPLETE = "REGISTRATION_COMPLETE";
+	public static final String KEY_PUSH_NOTIFICATION = "PUSH_NOTIFICATION";
+	// id to handle the notification in the notification tray
+	public static final int KEY_NOTIFICATION_ID = 100;
+	public static final int KEY_NOTIFICATION_ID_BIG_IMAGE = 101;
 
 	public static final String TAG = "LifeLine";
 	public static final String DISPLAY_MESSAGE_ACTION =

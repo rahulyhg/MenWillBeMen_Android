@@ -28,25 +28,12 @@ dependencies {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
     compile('com.mikepenz:materialdrawer:5.9.0@aar') {
         transitive = true
     }
 
-//
 
     //    compile 'com.github.ViksaaSkool:AwesomeSplash:v1.0.0'
-
 
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
@@ -73,16 +60,14 @@ dependencies {
     compile 'com.afollestad.material-dialogs:core:0.9.4.4'
     compile 'com.github.kizitonwose.colorpreference:support:1.0.3'
     compile 'com.larswerkman:lobsterpicker:1.0.1'
-
     compile 'me.gujun.android.taggroup:library:1.4@aar'
-
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.android.support:support-vector-drawable:25.3.1'
+    compile 'com.google.firebase:firebase-messaging:10.0.1'
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
-
-
 }
+
 
 
 
