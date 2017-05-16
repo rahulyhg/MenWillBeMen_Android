@@ -2,8 +2,10 @@ package sourabh.menwillbemen.app;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.BuildConfig;
 import com.android.volley.NetworkResponse;
 import com.android.volley.ParseError;
 import com.android.volley.Request;
@@ -54,7 +56,7 @@ public class CustomRequest extends Request<JSONObject> {
         this.showLoadingWheel = showloadingwheel;
         this.cd = new ConnectionDetector(con);
         this.progressWheel = new ProgressWheel(con,activity);
-//        showLogs(showloadingwheel, method, url, params, headers);
+        showLogs(showloadingwheel, method, url, params, headers);
         if (!this.cd.isConnectingToInternet()) {
             //CommonUtilities.showAlertDialog(con, "Internet Connection Error", "Please connect to working Internet connection", Boolean.valueOf(false));
         }
@@ -63,13 +65,13 @@ public class CustomRequest extends Request<JSONObject> {
         }
     }
 
-//    void showLogs(boolean showloadingwheel, int method, String url, Map<String, String> params, Map<String, String> headers) {
-//        Log.d("showloadingwheel", showloadingwheel + BuildConfig.FLAVOR);
-//        Log.d("method", method + BuildConfig.FLAVOR);
-//        Log.d("url", url);
-//        Log.d("params", params.toString());
-//        Log.d("headers", headers.toString());
-//    }
+    void showLogs(boolean showloadingwheel, int method, String url, Map<String, String> params, Map<String, String> headers) {
+        Log.d("showloadingwheel", showloadingwheel + BuildConfig.FLAVOR);
+        Log.d("method", method + BuildConfig.FLAVOR);
+        Log.d("url", url);
+        Log.d("params", params.toString());
+        Log.d("headers", headers.toString());
+    }
 
     protected Map<String, String> getParams() throws AuthFailureError {
         return this.params;

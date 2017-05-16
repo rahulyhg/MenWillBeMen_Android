@@ -24,7 +24,9 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.like.LikeButton;
+import com.like.OnLikeListener;
 import com.mikepenz.iconics.view.IconicsImageView;
 
 import org.json.JSONException;
@@ -62,6 +64,7 @@ public class DetailedPostActivity extends AppCompatActivity {
     TextView countWhatsApp;
     @BindView(R.id.count_share)
     TextView countShare;
+
     @BindView(R.id.count_likes)
     TextView countLikes;
 
@@ -75,6 +78,7 @@ public class DetailedPostActivity extends AppCompatActivity {
     LikeButton thumb_button;
 
 
+    InterstitialAd mInterstitialAd;
 
 
     List<PostItemData> postItemDataList;
@@ -129,13 +133,15 @@ public class DetailedPostActivity extends AppCompatActivity {
         position = getIntent( ).getIntExtra(AppConfig.ARG_PARAM_POSITION,0);
 
 
-        int color = Util.getRandomColor();
-        PostItemData item = postItemDataList.get(position);
+        final PostItemData postItemData = postItemDataList.get(position);
 
 
-        countWhatsApp.setText(item.getPost_whatsapp_count().toString());
-        countShare.setText(item.getPost_share_count().toString());
-        countLikes.setText(item.getPost_likes_count().toString());
+        int color = postItemData.getCard_color();
+
+
+        countWhatsApp.setText(postItemData.getPost_whatsapp_count().toString());
+        countShare.setText(postItemData.getPost_share_count().toString());
+        countLikes.setText(postItemData.getPost_likes_count().toString());
 
 
         cardView.setCardBackgroundColor(color);
@@ -143,22 +149,46 @@ public class DetailedPostActivity extends AppCompatActivity {
         share_button.setColor(color);
 
 
-        //name.setText(item.getName());
+        //name.setText(postItemData.getName());
 
         // Converting timestamp into x ago format
 //		CharSequence timeAgo = DateUtils.getRelativeTimeSpanString(
-//				Long.parseLong(item.getTimeStamp()),
+//				Long.parseLong(postItemData.getTimeStamp()),
 //				System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
 //		timestamp.setText(timeAgo);
 
         // Chcek for empty status message
-        if (!TextUtils.isEmpty(item.getPost())) {
-            statusMsg.setText(item.getPost());
+        if (!TextUtils.isEmpty(postItemData.getPost())) {
+            statusMsg.setText(postItemData.getPost());
             statusMsg.setVisibility(View.VISIBLE);
         } else {
             // status is empty, remove from view
             statusMsg.setVisibility(View.GONE);
         }
+
+
+
+
+        thumb_button.setOnLikeListener(new OnLikeListener() {
+            @Override
+            public void liked(LikeButton likeButton) {
+
+                postItemData.setIs_liked(1);
+                postItemData.setPost_likes_count(postItemData.getPost_likes_count()+1);
+                updateCount(postItemData.getId_post(),AppConfig.KEY_LIKE);
+
+            }
+
+            @Override
+            public void unLiked(LikeButton likeButton) {
+
+                postItemData.setIs_liked(0);
+                postItemData.setPost_likes_count(postItemData.getPost_likes_count()-1);
+                updateCount(postItemData.getId_post(),AppConfig.KEY_UNLIKE);
+
+
+            }
+        });
 
         whatsapp_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,18 +199,13 @@ public class DetailedPostActivity extends AppCompatActivity {
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
 
-                String text = postItemDataList.get(position).getPost();
+                String text = postItemData.getPost();
                 sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
                 sendIntent.setType("text/plain");
                 sendIntent.setPackage("com.whatsapp");
 
                 startActivity(sendIntent);
-                updateCount(postItemDataList.get(position).getId_post(),true);
-
-
-//                String new_count = String.valueOf(
-//                        (mRecyclerViewItems.get(position).getPost_whatsapp_count()+1));
-//                countWhatsApp.setText(new_count);
+                updateCount(postItemData.getId_post(),AppConfig.KEY_WHATSAPP);
 
 
             }
@@ -194,24 +219,90 @@ public class DetailedPostActivity extends AppCompatActivity {
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
 
-                String text = postItemDataList.get(position).getPost();
+                String text = postItemData.getPost();
                 sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
                 sendIntent.setType("text/plain");
 
                 startActivity(sendIntent);
 
-                updateCount(postItemDataList.get(position).getId_post(),false);
+                updateCount(postItemData.getId_post(),AppConfig.KEY_SHARE);
 
 //                countShare.setText(String.valueOf(
-//                        (mRecyclerViewItems.get(position).getPost_share_count()+1)));
+//                        (postItemDataList.get(position).getPost_share_count()+1)));
 
             }
         });
 
 
 
+
+
         showAd();
 
+
+//        initialiseInterstitialAd();
+
+    }
+
+    void initialiseInterstitialAd(){
+
+
+        mInterstitialAd = new InterstitialAd(this);
+
+        // set the ad unit ID
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        AdRequest adRequest = new AdRequest.Builder()
+                .build();
+
+        // Load ads into Interstitial Ads
+        mInterstitialAd.loadAd(adRequest);
+
+
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+                Toast.makeText(context,"onAdClosed",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdFailedToLoad(int i) {
+                super.onAdFailedToLoad(i);
+                Toast.makeText(context,"onAdFailedToLoad",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                super.onAdLeftApplication();
+                Toast.makeText(context,"onAdLeftApplication",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdOpened() {
+                super.onAdOpened();
+                Toast.makeText(context,"onAdOpened",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+                showInterstitial();
+
+                Toast.makeText(context,"onAdLoaded",Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showInterstitial() {
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        }
     }
 
 
@@ -269,6 +360,70 @@ public class DetailedPostActivity extends AppCompatActivity {
         }));
     }
 
+
+
+    void updateCount(int post_id, String what){
+
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("post_id", post_id+"");
+
+        String url = "";
+
+        if(what.equals(AppConfig.KEY_WHATSAPP)){
+            url = AppConfig.URL_UPDATE_WHATSAPP_COUNT;
+        }
+        else if(what.equals(AppConfig.KEY_SHARE))
+        {
+            url = AppConfig.URL_UPDATE_SHARE_COUNT;
+        }
+        else if(what.equals(AppConfig.KEY_LIKE)){
+            url = AppConfig.URL_LIKE_POST;
+        }
+        else{
+            url = AppConfig.URL_UNLIKE_POST;
+        }
+
+        Volley.newRequestQueue(context).add(new CustomRequest(this,this,
+                false, Request.Method.POST, url,
+                params, CommonUtilities.buildHeaders(context),
+
+
+                new com.android.volley.Response.Listener() {
+
+                    @Override
+                    public void onResponse(Object response) {
+                        JSONObject jsonObject = (JSONObject) response;
+                        JsonSeparator js= new JsonSeparator(context,jsonObject);
+
+                        try {
+                            if(js.isError()){
+
+                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+                            }else{
+
+                                //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+
+
+                }, new com.android.volley.Response.ErrorListener() {
+
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+
+            }
+        }));
+    }
 
 
 

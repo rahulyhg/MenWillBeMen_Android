@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.helper.SessionManager;
@@ -26,11 +27,15 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
         super.onTokenRefresh();
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
 
+        sessionManager = new SessionManager(getApplicationContext());
+
         // Saving reg id to shared preferences
         sessionManager.setFCMToken(refreshedToken);
 
         // sending reg id to your server
         sendRegistrationToServer(refreshedToken);
+
+        FirebaseMessaging.getInstance().subscribeToTopic(AppConfig.KEY_TOPIC_GLOBAL);
 
         // Notify UI that registration has completed, so the progress indicator can be hidden.
         Intent registrationComplete = new Intent(AppConfig.KEY_REGISTRATION_COMPLETE);

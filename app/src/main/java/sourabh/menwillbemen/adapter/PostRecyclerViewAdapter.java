@@ -1,6 +1,9 @@
 package sourabh.menwillbemen.adapter;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -16,12 +19,14 @@ import com.android.volley.toolbox.Volley;
 import com.github.curioustechizen.ago.RelativeTimeTextView;
 import com.google.android.gms.ads.NativeExpressAdView;
 import com.like.LikeButton;
+import com.like.OnLikeListener;
 import com.marshalchen.ultimaterecyclerview.expanx.Util.parent;
 import com.mikepenz.iconics.view.IconicsImageView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,8 +37,10 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import sourabh.menwillbemen.R;
+import sourabh.menwillbemen.activity.DetailedPostActivity;
 import sourabh.menwillbemen.activity.HomeActivity;
 import sourabh.menwillbemen.activity.LatestFragment;
+import sourabh.menwillbemen.activity.SwypeActivity;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
@@ -63,18 +70,21 @@ public class PostRecyclerViewAdapter extends
 
     // The Native Express ad view type.
     private static final int NATIVE_EXPRESS_AD_VIEW_TYPE = 1;
+    private AdapterCallBack adapterCallBack;
 
 
     public PostRecyclerViewAdapter(Activity activity,
 //                                   List<PostItemData> postItemDataList,
                                    List<Object> recyclerViewItems,
-                                   Float fontSize) {
+                                   Float fontSize,
+                                   AdapterCallBack adapterCallBack) {
 
         // this.postItemDataList = postItemDataList;
         this.mRecyclerViewItems = recyclerViewItems;
 
         this.activity =activity;
         this.fontSize = fontSize;
+        this.adapterCallBack = adapterCallBack;
     }
 
 
@@ -150,6 +160,14 @@ public class PostRecyclerViewAdapter extends
 //
 //    }
 
+
+//        @Override
+//    public int getItemViewType(int position) {
+//
+//            return position;
+//
+//    }
+
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
@@ -185,17 +203,26 @@ public class PostRecyclerViewAdapter extends
         switch (viewType) {
             case POST_ITEM_VIEW_TYPE:
 
-                PostViewHolder postViewHolder = (PostViewHolder) holder;
+                final PostViewHolder postViewHolder = (PostViewHolder) holder;
 
 
-                PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
+                final PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
                 postViewHolder.post.setText(postItemData.getPost());
 
 
-                postViewHolder.countWhatsApp.setText(postItemData.getPost_whatsapp_count().toString());
-                postViewHolder.countShare.setText(postItemData.getPost_share_count().toString());
-                postViewHolder.countLikes.setText(postItemData.getPost_likes_count().toString());
+//                postViewHolder.countWhatsApp.setText(postItemData.getPost_whatsapp_count().toString());
+                postViewHolder.countWhatsApp.setText(CommonUtilities.format(Long.parseLong(postItemData.getPost_whatsapp_count().toString())));
+                postViewHolder.countShare.setText(CommonUtilities.format(Long.parseLong(postItemData.getPost_share_count().toString())));
+                postViewHolder.countLikes.setText(CommonUtilities.format(Long.parseLong(postItemData.getPost_likes_count().toString())));
                 postViewHolder.category.setText(postItemData.getCategory_name().toString());
+
+
+                if(postItemData.getIs_liked() == 1){
+                    postViewHolder.likeButton.setLiked(true);
+
+                }else{
+                    postViewHolder.likeButton.setLiked(false);
+                }
 
 
                 try {
@@ -209,18 +236,35 @@ public class PostRecyclerViewAdapter extends
                 }
 
 
-                int color = Util.getRandomColor();
-                postViewHolder.cardView.setCardBackgroundColor(color);
+                int color = postItemData.getCard_color();//Util.getRandomColor();
+//                postViewHolder.cardView.setCardBackgroundColor(color);
+
+                ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), postViewHolder.cardView.getCardBackgroundColor().getDefaultColor(), color);
+                colorAnimation.setDuration(250); // milliseconds
+                colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animator) {
+                        postViewHolder.cardView.setCardBackgroundColor((int) animator.getAnimatedValue());
+
+                    }
+
+                });
+                colorAnimation.start();
+
+
                 postViewHolder.whatsapp_button.setColor(color);
                 postViewHolder.share_button.setColor(color);
-                postViewHolder.share_button.setColor(color);
+//                postViewHolder.likeButton.setCircleEndColorRes(color);
+
 
 
 
 
                 if (!TextUtils.isEmpty(postItemData.getPost())) {
 
-                    postViewHolder.post.setMaxLines(10);
+                    int maxLines = AppConfig.MAX_LINES;
+                    postViewHolder.post.setMaxLines(maxLines);
                     postViewHolder.post.setEllipsize(TextUtils.TruncateAt.END);
                     postViewHolder.post.setText(postItemData.getPost());
 
@@ -236,66 +280,88 @@ public class PostRecyclerViewAdapter extends
 
 
 
-//                holder.cardView.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        // Create new fragment and transaction
-//                        activity.startActivity(new Intent(activity, DetailedPostActivity.class)
-//                                .putExtra(AppConfig.ARG_PARAM_POST_DATA,
-//                                        (Serializable) postItemDataList)
-//                                .putExtra(AppConfig.ARG_PARAM_POSITION,position)
-//                        );
-//
-//
-//
-//
-//                    }
-//                });
+                postViewHolder.cardView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // Create new fragment and transaction
+                        activity.startActivity(new Intent(activity, SwypeActivity.class)
+                                .putExtra(AppConfig.ARG_PARAM_POST_DATA,
+                                        (Serializable) mRecyclerViewItems)
+                                .putExtra(AppConfig.ARG_PARAM_POSITION,position)
+                        );
 
-//                holder.whatsapp_button.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//
-//
-//
-//                        Intent sendIntent = new Intent();
-//                        sendIntent.setAction(Intent.ACTION_SEND);
-//
-//                        String text = postItemDataList.get(position).getPost();
-//                        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
-//                        sendIntent.setType("text/plain");
-//                        sendIntent.setPackage("com.whatsapp");
-//
-//                        activity.startActivity(sendIntent);
-//                        updateCount(postItemDataList.get(position).getId_post(),true);
-//
-//
-//
-//
-//                    }
-//                });
 
-//                holder.share_button.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//
-//
-//                        Intent sendIntent = new Intent();
-//                        sendIntent.setAction(Intent.ACTION_SEND);
-//
-//                        String text = postItemDataList.get(position).getPost();
-//                        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
-//                        sendIntent.setType("text/plain");
-//
-//                        activity.startActivity(sendIntent);
-//
-//                        updateCount(postItemDataList.get(position).getId_post(),false);
-//
-////                countShare.setText(String.valueOf(
-////                        (postItemDataList.get(position).getPost_share_count()+1)));
-//
-//                    }
-//                });
+
+
+                    }
+                });
+
+
+                postViewHolder.likeButton.setOnLikeListener(new OnLikeListener() {
+                    @Override
+                    public void liked(LikeButton likeButton) {
+
+                        postItemData.setIs_liked(1);
+                        postItemData.setPost_likes_count(postItemData.getPost_likes_count()+1);
+                        adapterCallBack.onItemChanged();
+                        updateCount(postItemData.getId_post(),AppConfig.KEY_LIKE);
+
+                    }
+
+                    @Override
+                    public void unLiked(LikeButton likeButton) {
+
+                        postItemData.setIs_liked(0);
+                        postItemData.setPost_likes_count(postItemData.getPost_likes_count()-1);
+                        adapterCallBack.onItemChanged();
+                        updateCount(postItemData.getId_post(),AppConfig.KEY_UNLIKE);
+
+
+                    }
+                });
+
+                postViewHolder.whatsapp_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+
+
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_SEND);
+
+                        String text = postItemData.getPost();
+                        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+                        sendIntent.setType("text/plain");
+                        sendIntent.setPackage("com.whatsapp");
+
+                        activity.startActivity(sendIntent);
+                        updateCount(postItemData.getId_post(),AppConfig.KEY_WHATSAPP);
+
+
+                    }
+                });
+
+                postViewHolder.share_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_SEND);
+
+                        String text = postItemData.getPost();
+                        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+                        sendIntent.setType("text/plain");
+
+                        activity.startActivity(sendIntent);
+
+                        updateCount(postItemData.getId_post(),AppConfig.KEY_SHARE);
+
+//                countShare.setText(String.valueOf(
+//                        (postItemDataList.get(position).getPost_share_count()+1)));
+
+                    }
+                });
 
                 break;
 
@@ -325,6 +391,9 @@ public class PostRecyclerViewAdapter extends
 
 
 
+
+
+
     }
 
     @Override
@@ -333,22 +402,31 @@ public class PostRecyclerViewAdapter extends
     }
 
 
-    void updateCount(int post_id, boolean isWhatsapp){
+    void updateCount(int post_id, String what){
 
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("post_id", post_id+"");
 
         String url = "";
-        if(isWhatsapp){
+
+        if(what.equals(AppConfig.KEY_WHATSAPP)){
             url = AppConfig.URL_UPDATE_WHATSAPP_COUNT;
-        }else{
+        }
+        else if(what.equals(AppConfig.KEY_SHARE))
+        {
             url = AppConfig.URL_UPDATE_SHARE_COUNT;
+        }
+        else if(what.equals(AppConfig.KEY_LIKE)){
+            url = AppConfig.URL_LIKE_POST;
+        }
+        else{
+            url = AppConfig.URL_UNLIKE_POST;
         }
 
         Volley.newRequestQueue(activity).add(new CustomRequest(activity,activity,
                 false, Request.Method.POST, url,
-                params, CommonUtilities.buildGuestHeaders(),
+                params, CommonUtilities.buildHeaders(activity),
 
 
                 new com.android.volley.Response.Listener() {
@@ -385,6 +463,12 @@ public class PostRecyclerViewAdapter extends
 
             }
         }));
+    }
+
+
+    public interface AdapterCallBack{
+
+        void onItemChanged();
     }
 
 }

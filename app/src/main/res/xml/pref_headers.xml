@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <CheckBoxPreference  android:title="@string/pref_notifications"
+    <SwitchPreference  android:title="@string/pref_notifications"
                         android:defaultValue="true"
                         android:summary="Turn Notifications on or off"
                         android:key="@string/pref_key_notifications" />
@@ -33,7 +33,21 @@
                         android:defaultValue="@string/pref_default_fontsize"
                         android:entries="@array/FontSizesDescription"
                         android:entryValues="@array/FontSizes"
-
-
         />
+
+    <SwitchPreference  android:title="@string/pref_animation"
+        android:defaultValue="true"
+        android:summary="Turn List Animation On or Off"
+        android:key="@string/pref_key_animation" />
+
+
+    <ListPreference
+        android:title="@string/pref_swype_animation"
+        android:summary="Select from different Swype Animations"
+        android:key="@string/pref_key_swype_animation"
+        android:defaultValue="@string/pref_default_swype_animation"
+        android:entries="@array/SwypeAnimationsDescription"
+        android:entryValues="@array/SwypeAnimations"
+        />
+
 </PreferenceScreen>

@@ -298,4 +298,54 @@
 
     </string-array>
 
+
+    <string-array name="SwypeAnimations">
+        <item>AccordionTransformer</item>
+        <item>BackgroundToForegroundTransformer</item>
+        <item>CubeInTransformer</item>
+        <item>CubeOutTransformer</item>
+        <item>DefaultTransformer</item>
+        <item>DepthPageTransformer</item>
+        <item>DrawFromBackTransformer</item>
+        <item>FlipHorizontalTransformer</item>
+        <item>FlipVerticalTransformer</item>
+        <item>ForegroundToBackgroundTransformer</item>
+        <item>ParallaxPageTransformer</item>
+        <item>RotateDownTransformer</item>
+        <item>RotateUpTransformer</item>
+        <item>StackTransformer</item>
+        <item>TabletTransformer</item>
+        <item>ZoomInTransformer</item>
+        <item> ZoomOutSlideTransformer</item>
+        <item>ZoomOutTranformer</item>
+
+    </string-array>
+
+    <string-array name="SwypeAnimationsDescription">
+        <!--<item>Small</item>-->
+        <!--<item>Medium</item>-->
+        <!--<item>Large</item>-->
+
+        <item>AccordionTransformer</item>
+        <item>BackgroundToForegroundTransformer</item>
+        <item>CubeInTransformer</item>
+        <item>CubeOutTransformer</item>
+        <item>DefaultTransformer</item>
+        <item>DepthPageTransformer</item>
+        <item>DrawFromBackTransformer</item>
+        <item>FlipHorizontalTransformer</item>
+        <item>FlipVerticalTransformer</item>
+        <item>ForegroundToBackgroundTransformer</item>
+        <item>ParallaxPageTransformer</item>
+        <item>RotateDownTransformer</item>
+        <item>RotateUpTransformer</item>
+        <item>StackTransformer</item>
+        <item>TabletTransformer</item>
+        <item>ZoomInTransformer</item>
+        <item> ZoomOutSlideTransformer</item>
+        <item>ZoomOutTranformer</item>
+    </string-array>
+
+
+
 </resources>

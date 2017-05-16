@@ -5,9 +5,9 @@
     <!--<color name="colorAccent">#FF4081</color>-->
     <color name="colorWhite">#ffffff</color>
 
-    <color name="colorPrimary">#FF0099CC</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF5722</color>
+    <color name="colorPrimary">#03A9F4</color>
+    <color name="colorPrimaryDark">#039BE5</color>
+    <color name="colorAccent">@color/colorDeepOrange</color>
 
 
 

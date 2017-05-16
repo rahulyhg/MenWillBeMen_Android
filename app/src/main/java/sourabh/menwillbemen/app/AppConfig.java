@@ -22,7 +22,7 @@ public class AppConfig {
 	static String VERSION = "/v1/";
 
 //	public static final String BASE = "http://192.168.42.164/menwillbemen_web" + VERSION;
-	public static final String BASE = "http://192.168.0.101/menwillbemen_web" + VERSION;
+	public static final String BASE = "http://192.168.1.101/menwillbemen_web" + VERSION;
 
 
 	public static String URL_GET_CITIES = BASE + "get_cities/";
@@ -39,6 +39,8 @@ public class AppConfig {
 	public static String URL_GET_DASHBOARD = BASE + "get_dashboard/";
 	public static String URL_UPDATE_WHATSAPP_COUNT= BASE + "update_whatsapp_count";
 	public static String URL_UPDATE_SHARE_COUNT= BASE + "update_share_count";
+	public static String URL_LIKE_POST= BASE + "like_post";
+	public static String URL_UNLIKE_POST= BASE + "unlike_post";
 
 	public static String URL_CREATE_RETAILER_CATEGORY = BASE + "create_retailer_category";
 	public static String URL_DELETE_RETAILER_CATEGORY = BASE + "delete_retailer_category/";
@@ -104,6 +106,7 @@ public class AppConfig {
 	public static final String ARG_PARAM_POSITION= "POSITION";
 	public static final String ARG_PARAM_IS_LATEST_POST_FRAGMENT= "IS_LATEST_POST_FRAGMENT";
 	public static final String ARG_PARAM_IS_HOME= "IS_HOME";
+	public static final String ARG_BACKGROUND_IMAGE = "background_image";
 
 	public static final String KEY_LEFT_HEADER_IMAGE = "left_header_image";
 	public static final String KEY_RIGHT_HEADER_IMAGE = "right_header_image";
@@ -118,12 +121,31 @@ public class AppConfig {
 	public static final int KEY_NOTIFICATION_ID = 100;
 	public static final int KEY_NOTIFICATION_ID_BIG_IMAGE = 101;
 
+	public static final String KEY_SETTINGS_CHANGED = "settings_changed";
+
+
 	public static final String TAG = "LifeLine";
 	public static final String DISPLAY_MESSAGE_ACTION =
 			"lifeline.mindwings.lifeline.DISPLAY_MESSAGE";
 	public static final String EXTRA_MESSAGE = "message";
 	public static final String KEY_LANGUAGES= "languages";
+	public static final String KEY_TOPIC_GLOBAL = "global";
+
+
+	public static final String KEY_API_KEY= "api_key";
+	public static final String KEY_USER= "user";
+	public static final String KEY_LOADING_MORE_STYLE = "loading_more_style";
+	public static final String KEY_REFRESH_STYLE = "refresh_style";
+
+	public static final String KEY_SHARE= "share";
+	public static final String KEY_WHATSAPP= "whatsapp";
+	public static final String KEY_LIKE= "like";
+	public static final String KEY_UNLIKE= "unlike";
+
+	public static final String KEY_BACKGROUND_IMAGE = "background_image";
+
 
 	public static int TIMER = 8000;
+	public static int MAX_LINES = 6;
 
 }

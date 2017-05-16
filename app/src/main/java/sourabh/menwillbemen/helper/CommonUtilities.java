@@ -1,18 +1,24 @@
 package sourabh.menwillbemen.helper;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -30,6 +36,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.app.AppConfig;
@@ -38,12 +47,12 @@ import sourabh.menwillbemen.data.SettingData;
 
 
 public final class CommonUtilities {
-	
+
 	// give your server registration url here
-    static final String SERVER_URL = "http://10.0.2.2/gcm_server_php/register.php"; 
+    static final String SERVER_URL = "http://10.0.2.2/gcm_server_php/register.php";
 
     // Google project id
-    static final String SENDER_ID = ""; 
+    static final String SENDER_ID = "";
 
     /**
      * Tag used on log messages.
@@ -75,6 +84,55 @@ public final class CommonUtilities {
         context.sendBroadcast(intent);
     }
 
+    public static String getGmailAccount(Context context) {
+
+        String possibleEmail = null;
+
+    Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
+    Account[] accounts = AccountManager.get(context).getAccounts();
+    for (Account account : accounts) {
+        if (emailPattern.matcher(account.name).matches()) {
+             possibleEmail = account.name;
+
+
+        }
+    }
+        return possibleEmail;
+    }
+
+    public static String getUserFnameLname(Context context){
+
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,null,null,null,null);
+        String given = null;
+
+        int indexGivenName = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME);
+        int indexFamilyName = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME);
+        int indexDisplayName = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME);
+
+        while (cursor.moveToNext()) {
+            given = cursor.getString(indexGivenName);
+            String family = cursor.getString(indexFamilyName);
+            String display = cursor.getString(indexDisplayName);
+        }
+
+        return given;
+    }
+
+    public static boolean isPermissionGranted(Context context, String permission)
+    {
+        int res = context.checkCallingOrSelfPermission(permission);
+        return (res == PackageManager.PERMISSION_GRANTED);
+    }
+
+    public static String getDeviceID(Context context){
+        TelephonyManager telephonyManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+        return telephonyManager.getDeviceId();
+    }
+
+    public static String getPhoneNumber(Context context){
+        TelephonyManager telephonyManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+        return telephonyManager.getLine1Number();
+    }
 
     public static int getMatColor(Context context, String typeColor)
     {
@@ -226,8 +284,6 @@ public final class CommonUtilities {
     public static Map<String,String> buildHeaders(Context contex) {
 
         HashMap<String, String> headers = new HashMap<String, String>();
-
-
         headers.put("Authorization", new SessionManager(contex).getAPIKEY());
         return headers;
     }
@@ -351,6 +407,40 @@ public final class CommonUtilities {
 
         builder.create().show();
     }
+
+    public static String format(long count) {
+        if (count < 1000) return "" + count;
+        int exp = (int) (Math.log(count) / Math.log(1000));
+        return String.format("%.1f %c",
+                count / Math.pow(1000, exp),
+                "kMGTPE".charAt(exp-1));
+    }
+
+//    private static final NavigableMap<Long, String> suffixes = new TreeMap<>();
+//    static {
+//        suffixes.put(1_000L, "k");
+//        suffixes.put(1_000_000L, "M");
+//        suffixes.put(1_000_000_000L, "G");
+//        suffixes.put(1_000_000_000_000L, "T");
+//        suffixes.put(1_000_000_000_000_000L, "P");
+//        suffixes.put(1_000_000_000_000_000_000L, "E");
+//    }
+//
+//    public static String format(long value) {
+//        //Long.MIN_VALUE == -Long.MIN_VALUE so we need an adjustment here
+//        if (value == Long.MIN_VALUE) return format(Long.MIN_VALUE + 1);
+//        if (value < 0) return "-" + format(-value);
+//        if (value < 1000) return Long.toString(value); //deal with easy case
+//
+//        Map.Entry<Long, String> e = suffixes.floorEntry(value);
+//        Long divideBy = e.getKey();
+//        String suffix = e.getValue();
+//
+//        long truncated = value / (divideBy / 10); //the number part of the output times 10
+//        boolean hasDecimal = truncated < 100 && (truncated / 10d) != (truncated / 10);
+//        return hasDecimal ? (truncated / 10d) + suffix : (truncated / 10) + suffix;
+//    }
+
 
     public static void refreshActivity(Activity activity){
 

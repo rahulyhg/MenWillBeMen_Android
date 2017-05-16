@@ -3,6 +3,10 @@ package sourabh.menwillbemen.activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.CardView;
@@ -13,6 +17,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -25,13 +31,20 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.NativeExpressAdView;
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
+import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
+import jp.wasabeef.recyclerview.adapters.SlideInRightAnimationAdapter;
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
 import sourabh.menwillbemen.R;
 
 import sourabh.menwillbemen.adapter.PostRecyclerViewAdapter;
@@ -39,9 +52,11 @@ import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.data.PostsData;
+import sourabh.menwillbemen.data.SettingData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.SessionManager;
+import sourabh.menwillbemen.helper.Util;
 
 
 /**
@@ -52,7 +67,9 @@ import sourabh.menwillbemen.helper.SessionManager;
  * Use the {@link LatestFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class LatestFragment extends android.support.v4.app.Fragment
+public class LatestFragment extends android.support.v4.app.Fragment implements PostRecyclerViewAdapter.AdapterCallBack,
+        SharedPreferences.OnSharedPreferenceChangeListener
+
 
 
 {
@@ -80,9 +97,31 @@ public class LatestFragment extends android.support.v4.app.Fragment
     Context context;
     SessionManager sessionManager;
     Float textSize = null;
+    String background_image;
 
     boolean toAppendOrRefresh;
     boolean isBlankRefresh;
+    RelativeLayout relativeLayoutList;
+
+    final Target target = new Target() {
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+
+            BitmapDrawable bg = new BitmapDrawable(context.getResources(), bitmap);
+            bg.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+            relativeLayoutList.setBackgroundDrawable(bg);
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable errorDrawable) {
+
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+        }
+    };
 
 
     // A Native Express ad is placed in every nth position in the RecyclerView.
@@ -161,6 +200,7 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
         view = inflater.inflate(R.layout.fragment_latest, container, false);
         recyclerView = (XRecyclerView) view.findViewById(R.id.list);
+        relativeLayoutList = (RelativeLayout) view.findViewById(R.id.RelativeLayoutList);
 
         context = getContext();
         sessionManager = new SessionManager(context);
@@ -169,7 +209,13 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
         if (bundle != null) {
             isLatestFragment = this.getArguments().getBoolean(AppConfig.ARG_PARAM_IS_LATEST_POST_FRAGMENT);
+//            background_image = this.getArguments().getString(AppConfig.ARG_BACKGROUND_IMAGE);
 
+        }
+
+        background_image = sessionManager.getBackgroundImage();
+        if(background_image != null){
+            loadBackgroundImage(relativeLayoutList);
         }
 
 
@@ -178,29 +224,34 @@ public class LatestFragment extends android.support.v4.app.Fragment
         return view;
     }
 
+    private void loadBackgroundImage(final RelativeLayout relativeLayoutList) {
 
+
+
+        Picasso.with(getActivity()).load(background_image).
+        into(target);
+
+    }
 
 
     void initialiseRecyclerView(){
         Log.d("Home","loadRecyclerViewData");
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        recyclerView.setRefreshProgressStyle(ProgressStyle
-                .Pacman);
-        recyclerView.setLoadingMoreProgressStyle(ProgressStyle
-                .Pacman);
+//        recyclerView.setRefreshProgressStyle(ProgressStyle
+//                .Pacman);
+//        recyclerView.setLoadingMoreProgressStyle(ProgressStyle
+//                .Pacman);
 
-        postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(),
-                mRecyclerViewItems,textSize);
+        recyclerView.setRefreshProgressStyle(sessionManager.getRefreshStyle());
+        recyclerView.setLoadingMoreProgressStyle(sessionManager.getLoadingMoreStyle());
 
-        recyclerView.setAdapter(postRecyclerViewAdapter);
-
-
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         try{
             textSize = Float.valueOf(sharedPref.getString
@@ -209,6 +260,25 @@ public class LatestFragment extends android.support.v4.app.Fragment
         }catch (Exception ex){
 
         }
+
+        postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(),
+                mRecyclerViewItems,textSize,this);
+
+        if(sharedPref.getBoolean(getActivity().getResources().getString(R.string.pref_key_animation),true)){
+
+            ScaleInAnimationAdapter alphaAdapter = new ScaleInAnimationAdapter(postRecyclerViewAdapter);
+            alphaAdapter.setDuration(200);
+            recyclerView.setAdapter(alphaAdapter);
+        }else{
+            recyclerView.setAdapter(postRecyclerViewAdapter);
+        }
+
+
+
+
+
+
+
 
         recyclerView.setLoadingListener(new XRecyclerView.LoadingListener() {
             @Override
@@ -257,10 +327,10 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
 
         if(isLatestFragment){
-            mRecyclerViewItems.addAll(postsData.getLatest());
+            mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
 //            postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(), mRecyclerViewItems,textSize);
         }else{
-            mRecyclerViewItems.addAll(postsData.getTop());
+            mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
 //            postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(), mRecyclerViewItems,textSize);
         }
 
@@ -280,9 +350,9 @@ public class LatestFragment extends android.support.v4.app.Fragment
         if(apppend){
 
             if(isLatestFragment){
-                mRecyclerViewItems.addAll(postsData.getLatest());
+                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
             }else{
-                mRecyclerViewItems.addAll(postsData.getTop());
+                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
             }
 
             recyclerView.loadMoreComplete();
@@ -291,10 +361,10 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
             if(isLatestFragment){
                 mRecyclerViewItems.clear();
-                mRecyclerViewItems.addAll(postsData.getLatest());
+                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
             }else{
                 mRecyclerViewItems.clear();
-                mRecyclerViewItems.addAll(postsData.getTop());
+                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
             }
             recyclerView.refreshComplete();
 
@@ -306,9 +376,12 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
         postRecyclerViewAdapter.notifyDataSetChanged();
 
+
     }
 
     public void  categoryChanged(String categoryId) {
+
+        recyclerView.setLoadingMoreEnabled(true);
 
         pageNo = 1;
         toAppendOrRefresh = false;
@@ -484,7 +557,7 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
         Volley.newRequestQueue(context).add(new CustomRequest(context,getActivity(),
                 toShowLoading, Request.Method.GET, URL,
-                CommonUtilities.buildBlankParams(), CommonUtilities.buildGuestHeaders(),
+                CommonUtilities.buildBlankParams(), CommonUtilities.buildHeaders(context),
 
 
                 new com.android.volley.Response.Listener() {
@@ -543,7 +616,16 @@ public class LatestFragment extends android.support.v4.app.Fragment
 
 
 
+    List<PostItemData> addColorsToPosts(List<PostItemData> postItemDatas){
 
+//        List<PostItemData> postItemDataList = new ArrayList<>();
+        for (PostItemData postItemData:postItemDatas) {
+
+            postItemData.setCard_color(Util.getRandomColor());
+//            postItemDataList.add(postItemData);
+        }
+        return postItemDatas;
+    }
 
 
     public void endOFPosts(){
@@ -563,8 +645,21 @@ public class LatestFragment extends android.support.v4.app.Fragment
         mListener = null;
     }
 
+    @Override
+    public void onItemChanged() {
+
+        postRecyclerViewAdapter.notifyDataSetChanged();
+
+    }
 
 
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+        String hello;
+
+    }
 
 
     /**
@@ -584,4 +679,5 @@ public class LatestFragment extends android.support.v4.app.Fragment
 //        void loadPosts(boolean isLatestFragment,int pageNo);
 
     }
+
 }

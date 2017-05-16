@@ -1,11 +1,16 @@
 package sourabh.menwillbemen.activity;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Gravity;
@@ -20,6 +25,10 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.materialdrawer.Drawer;
@@ -40,6 +49,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.app.AppConfig;
@@ -50,6 +60,7 @@ import sourabh.menwillbemen.data.PostsData;
 import sourabh.menwillbemen.data.SettingData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
+import sourabh.menwillbemen.helper.NotificationUtils;
 import sourabh.menwillbemen.helper.SessionManager;
 
 import static android.media.CamcorderProfile.get;
@@ -76,6 +87,14 @@ public class HomeActivity extends BaseActivity
     SessionManager sessionManager;
     SmartTabLayout viewPagerTab;
     ViewPager viewPager;
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private static final String TAG = HomeActivity.class.getSimpleName();
+    private BroadcastReceiver mSettingsBroadcastReceiver;
+
+    Boolean isSettingsChanged = false;
+    InterstitialAd mInterstitialAd;
+
+    int ad_counter = 0;
 
     //            int themeColor;
     @Override
@@ -92,7 +111,7 @@ public class HomeActivity extends BaseActivity
         viewPager = (ViewPager) findViewById(R.id.viewpager);
 
 //        themeColor = sessionManager.getThemeColor();
-        Log.d("Home","Home");
+        Log.d(TAG,"Home");
         setSupportActionBar(toolbar);
 //        final LayoutInflater factory = getLayoutInflater();
 //        final View headerView = factory.inflate(R.layout.drawer_header, null);
@@ -109,9 +128,18 @@ public class HomeActivity extends BaseActivity
             parseDashBoardData();
         }
 
-        setupDrawer(savedInstanceState);
+        setBroadcastListener();
 
-        setFragments(AppConfig.KEY_TITLE_LATEST,AppConfig.KEY_TITLE_TOP50);
+
+        String token = sessionManager.getFCMToken();
+
+        if(!sessionManager.isLoggedIn() && sessionManager.getFCMToken() != ""){
+
+
+        Log.d(TAG,"Not registered yet, fcm blank");
+            RegisterUser();
+        }
+
 
 
 //        setTheme();
@@ -151,6 +179,8 @@ public class HomeActivity extends BaseActivity
 
 
 //        getDashBoard();
+
+        initialiseInterstitialAd();
 
 
     }
@@ -220,12 +250,12 @@ public class HomeActivity extends BaseActivity
                 .withOnDrawerListener(new Drawer.OnDrawerListener() {
                     @Override
                     public void onDrawerOpened(View drawerView) {
-                        Toast.makeText(HomeActivity.this, "onDrawerOpened", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(HomeActivity.this, "onDrawerOpened", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onDrawerClosed(View drawerView) {
-                        Toast.makeText(HomeActivity.this, "onDrawerClosed", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(HomeActivity.this, "onDrawerClosed", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -256,15 +286,14 @@ public class HomeActivity extends BaseActivity
                                     case 3:
 
                                         startActivity(new Intent(HomeActivity.this,SettingsActivity.class));
-                                        Toast.makeText(HomeActivity.this, "Settings", Toast.LENGTH_SHORT).show();
-                                        Toast.makeText(HomeActivity.this, "Settings", Toast.LENGTH_SHORT).show();
+
                                         break;
                                     case 4:
 //                                        Toast.makeText(HomeActivity.this, "Rate", Toast.LENGTH_SHORT).show();
                                         rateApp();
                                         break;
                                     case 5:
-                                        Toast.makeText(HomeActivity.this, "Feedback", Toast.LENGTH_SHORT).show();
+//                                        Toast.makeText(HomeActivity.this, "Feedback", Toast.LENGTH_SHORT).show();
                                         break;
 
 
@@ -293,7 +322,7 @@ public class HomeActivity extends BaseActivity
                     @Override
                     public boolean onItemLongClick(View view, int position, IDrawerItem drawerItem) {
                         if (drawerItem instanceof SecondaryDrawerItem) {
-                            Toast.makeText(HomeActivity.this, ((SecondaryDrawerItem) drawerItem).getName().getText(HomeActivity.this), Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(HomeActivity.this, ((SecondaryDrawerItem) drawerItem).getName().getText(HomeActivity.this), Toast.LENGTH_SHORT).show();
                         }
                         return false;
                     }
@@ -404,6 +433,9 @@ public class HomeActivity extends BaseActivity
         loadHeaderFooter(viewFooterRight,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_RIGHT_HEADER_IMAGE));
         loadHeaderFooter(viewHeaderLeft,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_LEFT_HEADER_IMAGE));
 
+
+
+
         Log.d("Home","Drawer");
 
 
@@ -481,8 +513,12 @@ public class HomeActivity extends BaseActivity
         argsLatest.putBoolean(AppConfig.ARG_PARAM_IS_LATEST_POST_FRAGMENT,true);
         argsTop.putBoolean(AppConfig.ARG_PARAM_IS_LATEST_POST_FRAGMENT,false);
 
+
         argsLatest.putBoolean(AppConfig.ARG_PARAM_IS_HOME,true);
         argsTop.putBoolean(AppConfig.ARG_PARAM_IS_HOME,true);
+
+//        argsLatest.putString(AppConfig.ARG_BACKGROUND_IMAGE,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_BACKGROUND_IMAGE));
+//        argsTop.putString(AppConfig.ARG_BACKGROUND_IMAGE,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_BACKGROUND_IMAGE));
 
         FragmentPagerItemAdapter adapter = new FragmentPagerItemAdapter(
                 getSupportFragmentManager(), FragmentPagerItems.with(this)
@@ -492,6 +528,7 @@ public class HomeActivity extends BaseActivity
                 .create());
 
         viewPager.setAdapter(adapter);
+//        viewPagerTab.setSelectedIndicatorColors(Util.getRandomColor());
         viewPagerTab.setViewPager(viewPager);
     }
 
@@ -625,6 +662,15 @@ public class HomeActivity extends BaseActivity
         sessionManager.setCardColors(cardColorsDataList);
 
 
+        sessionManager.setLoadingRefreshStyle(Integer.parseInt(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_REFRESH_STYLE)),
+                Integer.parseInt(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_LOADING_MORE_STYLE)));
+
+        sessionManager.setBackgroundImage(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_BACKGROUND_IMAGE));
+
+
+        setupDrawer(savedInstanceState);
+        setFragments(AppConfig.KEY_TITLE_LATEST,AppConfig.KEY_TITLE_TOP50);
+
     }
 
 //    public void   parsePostsJson(JSONObject jsonObject){
@@ -660,6 +706,67 @@ public class HomeActivity extends BaseActivity
 //
 //
 //    }
+
+    void initialiseInterstitialAd(){
+
+
+        mInterstitialAd = new InterstitialAd(this);
+
+        // set the ad unit ID
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        AdRequest adRequest = new AdRequest.Builder()
+                .build();
+
+        // Load ads into Interstitial Ads
+        mInterstitialAd.loadAd(adRequest);
+
+
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+//                Toast.makeText(context,"onAdClosed",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdFailedToLoad(int i) {
+                super.onAdFailedToLoad(i);
+//                Toast.makeText(context,"onAdFailedToLoad",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                super.onAdLeftApplication();
+//                Toast.makeText(context,"onAdLeftApplication",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdOpened() {
+                super.onAdOpened();
+//                Toast.makeText(context,"onAdOpened",Toast.LENGTH_LONG).show();
+
+            }
+
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+
+//                Toast.makeText(context,"onAdLoaded",Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showInterstitial() {
+        if (mInterstitialAd.isLoaded()) {
+
+            mInterstitialAd.show();
+        }
+    }
 
 
     void rateApp(){
@@ -707,6 +814,191 @@ public class HomeActivity extends BaseActivity
 //                        .positiveText("Choose")
                 .show();
     }
+
+    void setBroadcastListener(){
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                // checking for type intent filter
+                if (intent.getAction().equals(AppConfig.KEY_REGISTRATION_COMPLETE)) {
+                    // gcm successfully registered
+                    // now subscribe to `global` topic to receive app wide notifications
+                    FirebaseMessaging.getInstance().subscribeToTopic(AppConfig.KEY_TOPIC_GLOBAL);
+
+
+                } else if (intent.getAction().equals(AppConfig.KEY_PUSH_NOTIFICATION)) {
+                    // new push notification is received
+
+//                    String message = intent.getStringExtra("message");
+//
+//                    Toast.makeText(getApplicationContext(), "Push notification: " + message, Toast.LENGTH_LONG).show();
+
+                }
+            }
+        };
+
+
+
+        mSettingsBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                Log.d("receiver", "Got message: " + "hii");
+
+                isSettingsChanged = true;
+//                if(postsData == null){
+//                    getDashBoard();
+//                }else{
+//                    parseDashBoardData();
+//                }
+
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // register GCM registration complete receiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(AppConfig.KEY_REGISTRATION_COMPLETE));
+
+        // register new push message receiver
+        // by doing this, the activity will be notified each time a new message arrives
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(AppConfig.KEY_PUSH_NOTIFICATION));
+
+        // clear the notification area when the app is opened
+        NotificationUtils.clearNotifications(getApplicationContext());
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSettingsBroadcastReceiver,
+                new IntentFilter(AppConfig.KEY_SETTINGS_CHANGED));
+
+
+        if(isSettingsChanged){
+
+            isSettingsChanged = false;
+
+            if(postsData == null){
+                getDashBoard();
+            }else{
+                parseDashBoardData();
+            }
+        }
+
+
+
+        ad_counter++;
+
+        if(mInterstitialAd.isLoaded() && ad_counter == 5)
+        {
+
+            ad_counter = 0;
+            showInterstitial();
+
+            initialiseInterstitialAd();
+        }
+        if(ad_counter >5){
+            ad_counter = 0;
+        }
+
+
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+        super.onPause();
+    }
+
+
+
+    void RegisterUser()
+    {
+
+
+
+        Map<String, String> params = new HashMap<>();
+        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_CONTACTS))
+        {
+            params.put("fname", CommonUtilities.getUserFnameLname(context));
+            params.put("lname", CommonUtilities.getUserFnameLname(context));
+
+        }
+        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.GET_ACCOUNTS)){
+            params.put("email", CommonUtilities.getGmailAccount(context));
+        }
+
+        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_PHONE_STATE)){
+
+            String phone =CommonUtilities.getPhoneNumber(context);
+            String device_id = CommonUtilities.getDeviceID(context);
+
+            if(phone != null)
+                params.put("phone", phone);
+
+            if(device_id != null)
+                params.put("device_id", device_id);
+
+
+        }
+
+        params.put("firebase_reg_id", sessionManager.getFCMToken());
+
+
+
+
+        Volley.newRequestQueue(this).add(new CustomRequest(this,this,
+                false, Request.Method.POST,
+                AppConfig.URL_REGISTER,
+                params, CommonUtilities.buildGuestHeaders(),
+
+
+                new com.android.volley.Response.Listener() {
+
+                    @Override
+                    public void onResponse(Object response) {
+                        JSONObject jsonObject = (JSONObject) response;
+                        JsonSeparator js= new JsonSeparator(context,jsonObject);
+
+                        try {
+                            if(js.isError()){
+
+                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+                            }else{
+
+//                                sessionManager.setUserJsonInfo(js.getData());
+
+                                JSONObject user = (js.getData().getJSONArray(AppConfig.KEY_USER)
+                                        .getJSONObject(0));
+                                String key = user.getString(AppConfig.KEY_API_KEY);
+                                sessionManager.setAPIKEY(key);
+                                sessionManager.setLogin(true);
+
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+
+
+                }, new com.android.volley.Response.ErrorListener() {
+
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+
+            }
+        }));
+    }
+
 
 
 //    public PostsData getPostsDataFromActivity() {

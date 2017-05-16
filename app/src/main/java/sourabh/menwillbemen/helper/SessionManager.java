@@ -61,7 +61,13 @@ public class SessionManager {
 	private static final String KEY_GCMID = "GCMID";
 	private static final String KEY_API_KEY = "API_KEY";
 	private static final String KEY_MEMBERSHIP = "membership";
+	private static final String KEY_FIREBASE_REG_ID = "firebase_reg_id";
+
+
+
+
 	private static final String KEY_IMEI = "imei";
+	private static final String KEY_USER_JSON = "user_json";
 
 	private static final String KEY_STATUS = "status";
 
@@ -81,11 +87,9 @@ public class SessionManager {
 
 
 
-	public void    setUserInfo(String id, String fname, String lname,
+	public void    setUserInfo(String id, String fname,String lname,
 							   String phone, String email,String API_KEY,
-							   String GCMID , String imei, String membership, String status, String created_at) {
-
-
+							   String firebase_reg_id , String imei, String status, String created_at) {
 
 
 
@@ -93,19 +97,13 @@ public class SessionManager {
 		editor.putString(KEY_FNAME,fname);
 		editor.putString(KEY_LNAME, lname);
 		editor.putString(KEY_PHONE, phone);
-
 		editor.putString(KEY_EMAIL,email);
 		editor.putString(KEY_API_KEY,API_KEY);
-		editor.putString(KEY_GCMID, GCMID);
 		editor.putString(KEY_STATUS, status);
-
-
 		editor.putString(KEY_CREATED_AT, created_at);
 		editor.putString(KEY_IMEI, imei);
-		editor.putString(KEY_MEMBERSHIP, membership);
-
+		editor.putString(KEY_FIREBASE_REG_ID, firebase_reg_id);
 		editor.putBoolean(KEY_IS_USER_INFO_SAVED, true);
-
 
 
 		// commit changes
@@ -113,6 +111,28 @@ public class SessionManager {
 
 		Log.d(TAG, "User info set!");
 	}
+
+	public void setUserJsonInfo(JSONObject user) {
+
+
+		editor.putString(KEY_USER_JSON,user.toString());
+		// commit changes
+		editor.commit();
+
+		Log.d(TAG, "User info set!");
+	}
+	public void setAPIKEY(String api_key) {
+
+		Log.d("api_key", api_key);
+
+		editor.putString(KEY_API_KEY,api_key);
+		// commit changes
+		editor.commit();
+
+		Log.d(TAG, "User info set!");
+	}
+
+
 
 
 	public void setDefaultCity(String city_id, String city_name)
@@ -204,7 +224,7 @@ public class SessionManager {
 
 	public String getFCMToken()
 	{
-		return pref.getString(KEY_FCM_TOKEN,KEY_FCM_TOKEN) ;
+		return pref.getString(KEY_FCM_TOKEN,"") ;
 
 	}
 
@@ -230,6 +250,25 @@ public class SessionManager {
 		editor.commit();
 
 	}
+
+	public void setLoadingRefreshStyle(int refresh_style, int loading_more_style)
+	{
+
+		editor.putInt(AppConfig.KEY_LOADING_MORE_STYLE,loading_more_style);
+		editor.putInt(AppConfig.KEY_REFRESH_STYLE,refresh_style);
+
+		editor.commit();
+
+	}
+
+	public int getLoadingMoreStyle(){
+		return pref.getInt(AppConfig.KEY_LOADING_MORE_STYLE,0);
+	}
+
+	public int getRefreshStyle(){
+		return pref.getInt(AppConfig.KEY_REFRESH_STYLE,0);
+	}
+
 
 	public Set<String> getCardColors(){
 		//get from shared prefs

@@ -59,7 +59,9 @@ public class PostItemData
     private String post_created_on;
     private Integer post_whatsapp_count;
     private Integer post_share_count;
+    private Integer is_liked;
 
+    private Integer card_color;
 
     private String category_name;
 
@@ -135,12 +137,23 @@ public class PostItemData
         this.post = post;
     }
 
+    public Integer getIs_liked() {
+        return is_liked;
+    }
 
+    public void setIs_liked(Integer is_liked) {
+        this.is_liked = is_liked;
+    }
 
+    public Integer getCard_color() {
+        return card_color;
+    }
 
+    public void setCard_color(Integer card_color) {
+        this.card_color = card_color;
+    }
 
-
-//    //The unique ID for this type of item
+    //    //The unique ID for this type of item
 //    @Override
 //    public int getType() {
 //        return R.id.fastadapter_sampleitem_id;
