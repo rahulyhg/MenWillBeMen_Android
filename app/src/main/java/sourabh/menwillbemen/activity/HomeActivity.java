@@ -7,9 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -29,10 +29,16 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.mikepenz.community_material_typeface_library.CommunityMaterial;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
+import com.mikepenz.iconics.Iconics;
+import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.holder.BadgeStyle;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
@@ -56,12 +62,14 @@ import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.CategoryData;
 import sourabh.menwillbemen.data.LanguageData;
+import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.data.PostsData;
 import sourabh.menwillbemen.data.SettingData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.NotificationUtils;
 import sourabh.menwillbemen.helper.SessionManager;
+import sourabh.menwillbemen.ui.CustomUrlPrimaryDrawerItem;
 
 import static android.media.CamcorderProfile.get;
 
@@ -82,8 +90,8 @@ public class HomeActivity extends BaseActivity
     Bundle savedInstanceState;
     Bitmap bitmapIcon = null;
     List<SettingData> settingDataList;
-    List<SettingData> cardColorsDataList;
     String activeCategoryId;
+    HashMap<String, String> hashMapSettings = new HashMap<>();
     SessionManager sessionManager;
     SmartTabLayout viewPagerTab;
     ViewPager viewPager;
@@ -212,6 +220,7 @@ public class HomeActivity extends BaseActivity
 
 
 
+
         //first create the main drawer (this one will be used to add the second drawer on the other side)
         result = new DrawerBuilder()
                 .withActivity(this)
@@ -223,6 +232,8 @@ public class HomeActivity extends BaseActivity
                                 .withIcon(FontAwesome.Icon.faw_home)
 //                                .withSelectedIconColor(themeColor)
                                 .withIdentifier(1),
+
+
                         new PrimaryDrawerItem()
                                 .withName(R.string.drawer_item_change_language)
                                 .withIcon(GoogleMaterial.Icon.gmd_language)
@@ -430,8 +441,8 @@ public class HomeActivity extends BaseActivity
         ImageView viewFooterRight = (ImageView) resultAppended.getHeader();
         ImageView viewHeaderLeft = (ImageView) result.getHeader();
 
-        loadHeaderFooter(viewFooterRight,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_RIGHT_HEADER_IMAGE));
-        loadHeaderFooter(viewHeaderLeft,SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_LEFT_HEADER_IMAGE));
+        loadHeaderFooter(viewFooterRight,hashMapSettings.get(AppConfig.KEY_RIGHT_HEADER_IMAGE));
+        loadHeaderFooter(viewHeaderLeft,hashMapSettings.get(AppConfig.KEY_LEFT_HEADER_IMAGE));
 
 
 
@@ -473,10 +484,12 @@ public class HomeActivity extends BaseActivity
 
         drawerItems.add(
                 new PrimaryDrawerItem()
-                        .withIcon(GoogleMaterial.Icon.gmd_keyboard_arrow_left)
+//                        .withIcon(GoogleMaterial.Icon.gmd_keyboard_arrow_left)
 //                            .withTextColor(getResources().getColor(R.color.colorWhite))
 //                        .withSelectedIconColor(themeColor)
-                        .withName("Fresh Stuff ")
+                        .withName("Fresh Stuff")
+                        .withBadge(String.valueOf(getTotalPostsCount()))
+                        .withBadgeStyle(new BadgeStyle().withTextColor(Color.WHITE).withColorRes(R.color.colorAccent))
 
         );
 
@@ -489,18 +502,35 @@ public class HomeActivity extends BaseActivity
 //            customPrimaryDrawerItem.withName(category.getCategory_name());
 
             drawerItems.add(
+//                    new CustomUrlPrimaryDrawerItem()
+//                            .withName("demo")
+//                            .withDescription("demo desc")
+//                            .withIcon("http://192.168.1.101/menwillbemen_web/images/background/header.jpg")
+
                     new PrimaryDrawerItem()
-                            .withIcon(GoogleMaterial.Icon.gmd_keyboard_arrow_left )
+//                            .withIcon(GoogleMaterial.Icon.gmd_keyboard_arrow_left )
 //                            .withTextColor(getResources().getColor(R.color.colorWhite))
 //                            .withSelectedIconColor(themeColor)
                             .withName(category.getCategory_name())
+                    .withBadge(category.getCount().toString())
+                            .withBadgeStyle(new BadgeStyle().withTextColor(Color.WHITE).withColorRes(R.color.colorPrimaryDark))
 
             );
+
 
             //if you have a id you can also do: .withIdentifier(category.getIdentifier());
             //depending on what you need to identify or to do the logic on click on one of those items you can also set a tag on the item: .withTag(category);
         }
         return drawerItems;
+    }
+
+    String getTotalPostsCount( ){
+        int count = 0;
+        for(CategoryData category : categoryDataList) {
+            count = count + category.getCount();
+
+        }
+        return (CommonUtilities.format(count));
     }
 
     void   setFragments(String first_fragment_title, String second_fragment_title){
@@ -658,14 +688,29 @@ public class HomeActivity extends BaseActivity
         categoryDataList = postsData.getCategories();
         settingDataList = postsData.getSettings();
 
-        cardColorsDataList = postsData.getCard_colors();
-        sessionManager.setCardColors(cardColorsDataList);
+        sessionManager.setCardColors(postsData.getCard_colors());
+        try {
+
+            String languageJson = "{\""+AppConfig.KEY_LANGUAGES+"\":"+new Gson().toJson(postsData.getLanguages())+"}";
+
+            sessionManager.setLangauges(new JSONObject(languageJson));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        hashMapSettings = SettingsToHashMapSettings(settingDataList);
 
 
-        sessionManager.setLoadingRefreshStyle(Integer.parseInt(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_REFRESH_STYLE)),
-                Integer.parseInt(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_LOADING_MORE_STYLE)));
+        sessionManager.setLoadingRefreshStyle(Integer.parseInt(hashMapSettings.get(AppConfig.KEY_REFRESH_STYLE)),
+                Integer.parseInt(hashMapSettings.get(AppConfig.KEY_LOADING_MORE_STYLE)));
 
-        sessionManager.setBackgroundImage(SettingsToHashMapSettings(settingDataList).get(AppConfig.KEY_BACKGROUND_IMAGE));
+        sessionManager.setBackgroundImage(hashMapSettings.get(AppConfig.KEY_BACKGROUND_IMAGE));
+        sessionManager.setIterations(
+                Integer.parseInt(hashMapSettings.get(AppConfig.KEY_INTERSTITIAL_ITERATIONS)),
+                Integer.parseInt(hashMapSettings.get(AppConfig.KEY_NATIVE_ITERATIONS))
+
+                );
+
 
 
         setupDrawer(savedInstanceState);
@@ -734,6 +779,7 @@ public class HomeActivity extends BaseActivity
             @Override
             public void onAdFailedToLoad(int i) {
                 super.onAdFailedToLoad(i);
+                initialiseInterstitialAd();
 //                Toast.makeText(context,"onAdFailedToLoad",Toast.LENGTH_LONG).show();
 
             }
@@ -892,7 +938,7 @@ public class HomeActivity extends BaseActivity
 
         ad_counter++;
 
-        if(mInterstitialAd.isLoaded() && ad_counter == 5)
+        if(mInterstitialAd.isLoaded() && ad_counter == sessionManager.getInterstitialIterations())
         {
 
             ad_counter = 0;
@@ -900,8 +946,8 @@ public class HomeActivity extends BaseActivity
 
             initialiseInterstitialAd();
         }
-        if(ad_counter >5){
-            ad_counter = 0;
+        if(ad_counter >sessionManager.getInterstitialIterations()){
+            ad_counter = sessionManager.getInterstitialIterations()-1;
         }
 
 
@@ -1000,6 +1046,24 @@ public class HomeActivity extends BaseActivity
     }
 
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+
+
+
+                ((LatestFragment) getSupportFragmentManager().getFragments().get(0))
+                        .postDataUpdatedFromDetailedScreen((List<PostItemData>) data.getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA));
+
+                ((LatestFragment) getSupportFragmentManager().getFragments().get(1))
+                        .postDataUpdatedFromDetailedScreen((List<PostItemData>) data.getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA));;
+
+
+
+        }
+    }
+
+
 
 //    public PostsData getPostsDataFromActivity() {
 //        return postsData;
@@ -1089,6 +1153,17 @@ public class HomeActivity extends BaseActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.home , menu);
+
+        menu.findItem(R.id.action_openRight).setIcon(new IconicsDrawable(this)
+                .icon(GoogleMaterial.Icon.gmd_keyboard_arrow_left)
+                .color(Color.WHITE)
+                .sizeDp(20));
+
+        menu.findItem(R.id.action_share).setIcon(new IconicsDrawable(this)
+                .icon(CommunityMaterial.Icon.cmd_share)
+                .color(Color.WHITE)
+                .sizeDp(20));
+
         return true;
     }
 

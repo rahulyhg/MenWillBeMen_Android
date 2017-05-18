@@ -1,36 +1,26 @@
 package sourabh.menwillbemen.adapter;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-import com.desarrollodroide.libraryfragmenttransactionextended.FragmentTransactionExtended;
 import com.like.LikeButton;
 import com.mikepenz.iconics.view.IconicsImageView;
 
@@ -39,22 +29,13 @@ import org.json.JSONObject;
 
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.activity.DetailedPostActivity;
-import sourabh.menwillbemen.activity.LatestFragment;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.AppController;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.helper.CommonUtilities;
-import sourabh.menwillbemen.helper.Const;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.Util;
-
-import static android.R.attr.ellipsize;
-import static android.R.attr.fragment;
-import static android.R.attr.maxLines;
-import static android.R.attr.value;
-import static sourabh.menwillbemen.R.id.share;
-import static sourabh.menwillbemen.app.AppConfig.URL_UPDATE_WHATSAPP_COUNT;
 
 public class PostListAdapter extends BaseAdapter {
 	private Activity activity;

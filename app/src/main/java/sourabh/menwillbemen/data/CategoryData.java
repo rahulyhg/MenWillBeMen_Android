@@ -9,6 +9,15 @@ public class CategoryData implements Serializable{
     String category_name;
     String created_on;
     String category_icon;
+    Integer count;
+
+    public Integer getCount() {
+        return count;
+    }
+
+    public void setCount(Integer count) {
+        this.count = count;
+    }
 
     public String getCategory_icon() {
         return category_icon;

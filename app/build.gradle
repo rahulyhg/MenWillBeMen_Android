@@ -71,6 +71,15 @@ dependencies {
     compile 'com.eftimoff:android-viewpager-transformers:1.0.1@aar'
     compile 'com.github.sembozdemir:ViewPagerArrowIndicator:1.0.0'
 
+    compile 'com.github.clockbyte:admobadapter:1.4.1'
+
+    String htextview_version = "0.1.1"
+    compile "com.hanks:htextview-base:$htextview_version"    // base library
+    compile "com.hanks:htextview-line:$htextview_version"        // optional
+    compile "com.hanks:htextview-evaporate:$htextview_version"   // optional
+
+//    compile 'com.ToxicBakery.viewpager.transforms:view-pager-transforms:1.2.32@aar'
+
 
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'

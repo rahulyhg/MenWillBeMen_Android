@@ -12,13 +12,11 @@
     android:paddingBottom="@dimen/feed_item_margin"
     android:layout_marginLeft="@dimen/feed_item_margin"
     android:layout_marginRight="@dimen/feed_item_margin"
-
     card_view:cardUseCompatPadding="true"
     card_view:cardElevation="5dp"
     card_view:cardCornerRadius="5dp"
     card_view:cardPreventCornerOverlap="false"
     card_view:cardBackgroundColor="@color/colorDeepOrange"
-
     android:foreground="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:id="@+id/card"
@@ -62,7 +60,7 @@
 
         <RelativeLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/RelativeLayout01"
+            android:id="@+id/RelativeLayoutCategory"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:padding="2dp"

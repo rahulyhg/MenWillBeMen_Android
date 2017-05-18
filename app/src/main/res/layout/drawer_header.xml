@@ -4,5 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/imageViewHeader"
+    android:src="@drawable/doodle"
     android:adjustViewBounds="true"
     android:scaleType="fitCenter"></ImageView>

@@ -210,6 +210,24 @@ public class SessionManager {
 		editor.commit();
 	}
 
+	public void setIterations(int interstitial, int native_iteration)
+	{
+		editor.putInt(AppConfig.KEY_INTERSTITIAL_ITERATIONS,interstitial);
+		editor.putInt(AppConfig.KEY_NATIVE_ITERATIONS,native_iteration);
+
+		editor.commit();
+	}
+
+	public int getInterstitialIterations(){
+		return pref.getInt(AppConfig.KEY_INTERSTITIAL_ITERATIONS,10);
+	}
+
+
+
+	public int getNativeIterations(){
+		return pref.getInt(AppConfig.KEY_NATIVE_ITERATIONS,10);
+	}
+
 	public String getBackgroundImage()
 	{
 		return pref.getString(KEY_BACKGROUND_IMAGE,KEY_BACKGROUND_IMAGE) ;

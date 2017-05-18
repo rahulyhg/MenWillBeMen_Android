@@ -11,13 +11,15 @@
 
     <!--<string name="banner_ad_unit_id">ca-app-pub-4318223458314026/8591145592</string>-->
     <string name="banner_ad_unit_id">ca-app-pub-4318223458314026/3488325592</string>
-    <string name="native_ad_unit_id">ca-app-pub-4318223458314026/3488325592</string>
+    <string name="native_medium_ad_unit_id">ca-app-pub-4318223458314026/6302191198</string>
+    <string name="interstitial_ad_unit_id">ca-app-pub-4318223458314026/8408902794</string>
+
+    <string name="native_small_ad_unit_id">ca-app-pub-4318223458314026/6452661592</string>
 
 
     <string name="admob_app_id">ca-app-pub-4318223458314026~2011592393</string>
 
-    <!--<string name="interstitial_ad_unit_id">ca-app-pub-4318223458314026/8408902794</string>-->
-    <string name="interstitial_ad_unit_id">ca-app-pub-0664570763252260/1769900428</string>
+    <!--<string name="interstitial_ad_unit_id">ca-app-pub-0664570763252260/1769900428</string>-->
 
 
     <string name="key_get_data">data</string>

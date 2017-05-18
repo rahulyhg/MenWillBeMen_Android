@@ -17,6 +17,7 @@ public class PostsData implements Serializable {
     private List<CategoryData> categories = null;
     private List<SettingData> settings = null;
     private List<SettingData> card_colors = null;
+    private List<LanguageData> languages = null;
 
     public List<SettingData> getCard_colors() {
         return card_colors;
@@ -59,10 +60,11 @@ public class PostsData implements Serializable {
     }
 
 
+    public List<LanguageData> getLanguages() {
+        return languages;
+    }
 
-
-
-
-
-
+    public void setLanguages(List<LanguageData> languages) {
+        this.languages = languages;
+    }
 }

@@ -166,9 +166,11 @@ public class SplashScreenActivity extends BaseActivity {
 
     public void getDashBoard()
     {
+
+        String url = AppConfig.URL_GET_DASHBOARD+sessionManager.getSelectedLanguageId();
         Volley.newRequestQueue(this).add(new CustomRequest(this,this,
                 true, Request.Method.GET,
-                AppConfig.URL_GET_DASHBOARD+sessionManager.getSelectedLanguageId(),
+                url,
                 CommonUtilities.buildBlankParams(), CommonUtilities.buildGuestHeaders(),
 
 

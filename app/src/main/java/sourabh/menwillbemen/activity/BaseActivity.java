@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 
+import com.google.android.gms.ads.MobileAds;
+
 import sourabh.menwillbemen.R;
 
 
@@ -22,6 +24,8 @@ public class BaseActivity extends AppCompatActivity {
 //                .getInt("theme_color", Color.YELLOW);
 //        String strColor = String.format("#%06X", 0xFFFFFF & themeColor);
 //
+
+        MobileAds.initialize(this,getString(R.string.admob_app_id));
 
 
         super.onCreate(savedInstanceState);

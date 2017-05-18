@@ -107,6 +107,7 @@ public class AppConfig {
 	public static final String ARG_PARAM_IS_LATEST_POST_FRAGMENT= "IS_LATEST_POST_FRAGMENT";
 	public static final String ARG_PARAM_IS_HOME= "IS_HOME";
 	public static final String ARG_BACKGROUND_IMAGE = "background_image";
+	public static final String ARG_PARAM_CATEGORY_ID= "category_id";
 
 	public static final String KEY_LEFT_HEADER_IMAGE = "left_header_image";
 	public static final String KEY_RIGHT_HEADER_IMAGE = "right_header_image";
@@ -144,8 +145,12 @@ public class AppConfig {
 
 	public static final String KEY_BACKGROUND_IMAGE = "background_image";
 
+	public static final String KEY_INTERSTITIAL_ITERATIONS = "interstitial_iterations";
+	public static final String KEY_NATIVE_ITERATIONS = "native_iterations";
 
 	public static int TIMER = 8000;
 	public static int MAX_LINES = 6;
+	public static int LARGE_NUMBER = 99999;
+
 
 }

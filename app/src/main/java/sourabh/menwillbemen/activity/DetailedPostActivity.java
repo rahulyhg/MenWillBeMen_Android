@@ -2,18 +2,12 @@ package sourabh.menwillbemen.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.view.Display;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,11 +38,6 @@ import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
-import sourabh.menwillbemen.helper.Util;
-
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.L;
-import static sourabh.menwillbemen.R.id.share_button;
-import static sourabh.menwillbemen.R.id.whatsapp_button;
 
 public class DetailedPostActivity extends AppCompatActivity {
 

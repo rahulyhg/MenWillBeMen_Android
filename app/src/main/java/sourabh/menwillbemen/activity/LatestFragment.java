@@ -2,49 +2,46 @@ package sourabh.menwillbemen.activity;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.clockbyte.admobadapter.expressads.AdmobExpressRecyclerAdapterWrapper;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.NativeExpressAdView;
-import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
-import jp.wasabeef.recyclerview.adapters.SlideInRightAnimationAdapter;
-import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
 import sourabh.menwillbemen.R;
 
 import sourabh.menwillbemen.adapter.PostRecyclerViewAdapter;
@@ -52,7 +49,6 @@ import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.data.PostsData;
-import sourabh.menwillbemen.data.SettingData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.SessionManager;
@@ -102,6 +98,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
     boolean toAppendOrRefresh;
     boolean isBlankRefresh;
     RelativeLayout relativeLayoutList;
+    AdmobExpressRecyclerAdapterWrapper adapterWrapper;
 
     final Target target = new Target() {
         @Override
@@ -205,6 +202,10 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         context = getContext();
         sessionManager = new SessionManager(context);
 
+        MobileAds.initialize(context, getString(R.string.admob_app_id));
+
+
+
         Bundle bundle = this.getArguments();
 
         if (bundle != null) {
@@ -217,6 +218,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         if(background_image != null){
             loadBackgroundImage(relativeLayoutList);
         }
+
 
 
 
@@ -239,10 +241,85 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
+        adapterWrapper = new AdmobExpressRecyclerAdapterWrapper(context,getString(R.string.native_medium_ad_unit_id),
+                new AdSize(AdSize.FULL_WIDTH,150))
+        {
+
+            @NonNull
+            @Override
+            protected ViewGroup getAdViewWrapper(ViewGroup parent) {
+                //return some inflated ViewGroup for wrapping ad view into it
+                return (ViewGroup) LayoutInflater.from(parent.getContext()).inflate(R.layout.native_express_ad_container,
+                        parent, false);
+            }
+
+            // it's necessary to override this method if wrapper (R.layout.native_express_ad_container) has complex layout, at least ad view is not among of it's direct children. See super implementation, maybe it's enough for you
+            @Override
+            protected void recycleAdViewWrapper(@NonNull ViewGroup wrapper, @NotNull NativeExpressAdView ad) {
+                //get the view which directly will contain ad
+                ViewGroup container = (ViewGroup) wrapper.findViewById(R.id.adViewNative);
+                /**iterating through all children of the container view and remove the first occured {@link NativeExpressAdView}. It could be different with {@param ad}!!!*/
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View v = container.getChildAt(i);
+                    if (v instanceof NativeExpressAdView) {
+                        container.removeViewAt(i);
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            protected void addAdViewToWrapper(@NonNull ViewGroup wrapper, @NotNull NativeExpressAdView ad) {
+                super.addAdViewToWrapper(wrapper, ad);
+                AdListener adListener = ad.getAdListener ();
+
+                ad.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdClosed() {
+                        super.onAdClosed();
+
+                        CommonUtilities.showShortToast(context,"onAdClosed");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(int i) {
+                        super.onAdFailedToLoad(i);
+                        CommonUtilities.showShortToast(context,"onAdFailedToLoad "+i);
+
+                    }
+
+                    @Override
+                    public void onAdLeftApplication() {
+                        super.onAdLeftApplication();
+                        CommonUtilities.showShortToast(context,"onAdLeftApplication");
+
+                    }
+
+                    @Override
+                    public void onAdOpened() {
+                        super.onAdOpened();
+                        CommonUtilities.showShortToast(context,"onAdOpened");
+
+                    }
+
+                    @Override
+                    public void onAdLoaded() {
+                        super.onAdLoaded();
+                        CommonUtilities.showShortToast(context,"onAdLoaded");
+
+                    }
+                });
+                // and see https://developers.google.com/android/reference/com/google/android/gms/ads/AdListener to get what you can do with :)
+            }
+        };
 
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(mLayoutManager);
+
+
+
+
 
 //        recyclerView.setRefreshProgressStyle(ProgressStyle
 //                .Pacman);
@@ -253,6 +330,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         recyclerView.setLoadingMoreProgressStyle(sessionManager.getLoadingMoreStyle());
 
 
+
         try{
             textSize = Float.valueOf(sharedPref.getString
                     (getActivity().getResources().getString(R.string.pref_key_fontsize), ""));
@@ -261,16 +339,24 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         }
 
-        postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(),
+        postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(),((HomeActivity)getActivity()).getActiveCategoryId(),
                 mRecyclerViewItems,textSize,this);
+
+
+        adapterWrapper.setAdapter(postRecyclerViewAdapter);
+
+        adapterWrapper.setLimitOfAds(AppConfig.LARGE_NUMBER);
+        adapterWrapper.setNoOfDataBetweenAds(sessionManager.getNativeIterations());
+        adapterWrapper.setFirstAdIndex(sessionManager.getNativeIterations());
+
 
         if(sharedPref.getBoolean(getActivity().getResources().getString(R.string.pref_key_animation),true)){
 
-            ScaleInAnimationAdapter alphaAdapter = new ScaleInAnimationAdapter(postRecyclerViewAdapter);
+            ScaleInAnimationAdapter alphaAdapter = new ScaleInAnimationAdapter(adapterWrapper);
             alphaAdapter.setDuration(200);
             recyclerView.setAdapter(alphaAdapter);
         }else{
-            recyclerView.setAdapter(postRecyclerViewAdapter);
+            recyclerView.setAdapter(adapterWrapper);
         }
 
 
@@ -316,6 +402,13 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
 
 
+
+    }
+
+    void addHeaders(){
+
+        View header = getActivity().getLayoutInflater().inflate(R.layout.drawer_header,null);
+        recyclerView.addHeaderView(header);
 
     }
     void loadRecyclerViewData(){
@@ -564,6 +657,8 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
                     @Override
                     public void onResponse(Object response) {
+
+
                         JSONObject jsonObject = (JSONObject) response;
                         JsonSeparator js= new JsonSeparator(context,jsonObject);
 
@@ -678,6 +773,16 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
 //        void loadPosts(boolean isLatestFragment,int pageNo);
 
+    }
+
+
+
+    public void postDataUpdatedFromDetailedScreen(List<PostItemData> postItemDataList){
+
+        mRecyclerViewItems.clear();
+        mRecyclerViewItems.addAll(postItemDataList);
+
+        postRecyclerViewAdapter.notifyDataSetChanged();
     }
 
 }

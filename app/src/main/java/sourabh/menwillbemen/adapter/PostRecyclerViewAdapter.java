@@ -18,9 +18,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.github.curioustechizen.ago.RelativeTimeTextView;
 import com.google.android.gms.ads.NativeExpressAdView;
+import com.jcodecraeer.xrecyclerview.XRecyclerView;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
-import com.marshalchen.ultimaterecyclerview.expanx.Util.parent;
 import com.mikepenz.iconics.view.IconicsImageView;
 
 import org.json.JSONException;
@@ -37,16 +37,12 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import sourabh.menwillbemen.R;
-import sourabh.menwillbemen.activity.DetailedPostActivity;
-import sourabh.menwillbemen.activity.HomeActivity;
-import sourabh.menwillbemen.activity.LatestFragment;
 import sourabh.menwillbemen.activity.SwypeActivity;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
-import sourabh.menwillbemen.helper.Util;
 
 import static android.media.CamcorderProfile.get;
 
@@ -72,9 +68,11 @@ public class PostRecyclerViewAdapter extends
     private static final int NATIVE_EXPRESS_AD_VIEW_TYPE = 1;
     private AdapterCallBack adapterCallBack;
 
+    String categoryId;
 
     public PostRecyclerViewAdapter(Activity activity,
 //                                   List<PostItemData> postItemDataList,
+                                   String categoryId,
                                    List<Object> recyclerViewItems,
                                    Float fontSize,
                                    AdapterCallBack adapterCallBack) {
@@ -85,6 +83,7 @@ public class PostRecyclerViewAdapter extends
         this.activity =activity;
         this.fontSize = fontSize;
         this.adapterCallBack = adapterCallBack;
+        this.categoryId = categoryId;
     }
 
 
@@ -94,17 +93,18 @@ public class PostRecyclerViewAdapter extends
 
         @BindView(R.id.txtStatusMsg)
         protected TextView post;
+
         @BindView(R.id.count_likes)
         protected TextView countLikes;
-
         @BindView(R.id.txtCountWhatsapp)
         protected TextView countWhatsApp;
+        @BindView(R.id.count_share)
+        protected TextView countShare;
 
         @BindView(R.id.category)
         protected TextView category;
 
-        @BindView(R.id.count_share)
-        protected TextView countShare;
+
 
         @BindView(R.id.card)
         protected CardView cardView;
@@ -284,10 +284,11 @@ public class PostRecyclerViewAdapter extends
                     @Override
                     public void onClick(View v) {
                         // Create new fragment and transaction
-                        activity.startActivity(new Intent(activity, SwypeActivity.class)
+                        activity.startActivityForResult(new Intent(activity, SwypeActivity.class)
                                 .putExtra(AppConfig.ARG_PARAM_POST_DATA,
                                         (Serializable) mRecyclerViewItems)
                                 .putExtra(AppConfig.ARG_PARAM_POSITION,position)
+                                .putExtra(AppConfig.ARG_PARAM_CATEGORY_ID,categoryId),1
                         );
 
 
@@ -334,6 +335,10 @@ public class PostRecyclerViewAdapter extends
                         sendIntent.setType("text/plain");
                         sendIntent.setPackage("com.whatsapp");
 
+                        postItemData.setPost_whatsapp_count(postItemData.getPost_whatsapp_count()+1);
+                        adapterCallBack.onItemChanged();
+
+
                         activity.startActivity(sendIntent);
                         updateCount(postItemData.getId_post(),AppConfig.KEY_WHATSAPP);
 
@@ -352,6 +357,10 @@ public class PostRecyclerViewAdapter extends
                         String text = postItemData.getPost();
                         sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
                         sendIntent.setType("text/plain");
+
+                        postItemData.setPost_share_count(postItemData.getPost_share_count()+1);
+                        adapterCallBack.onItemChanged();
+
 
                         activity.startActivity(sendIntent);
 
@@ -470,5 +479,8 @@ public class PostRecyclerViewAdapter extends
 
         void onItemChanged();
     }
+
+
+
 
 }
