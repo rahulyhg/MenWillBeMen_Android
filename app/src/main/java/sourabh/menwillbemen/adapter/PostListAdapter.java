@@ -28,7 +28,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import sourabh.menwillbemen.R;
-import sourabh.menwillbemen.activity.DetailedPostActivity;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.AppController;
 import sourabh.menwillbemen.app.CustomRequest;
@@ -208,11 +207,11 @@ public class PostListAdapter extends BaseAdapter {
 //                transaction.addToBackStack(null);
 //				transaction.commit();
 
-				activity.startActivity(new Intent(activity, DetailedPostActivity.class)
-						.putExtra(AppConfig.ARG_PARAM_POST_DATA,
-								(Serializable) postItemDataList)
-						.putExtra(AppConfig.ARG_PARAM_POSITION,position)
-				);
+//				activity.startActivity(new Intent(activity, DetailedPostActivity.class)
+//						.putExtra(AppConfig.ARG_PARAM_POST_DATA,
+//								(Serializable) postItemDataList)
+//						.putExtra(AppConfig.ARG_PARAM_POSITION,position)
+//				);
 
 
 
@@ -288,45 +287,45 @@ public class PostListAdapter extends BaseAdapter {
             url = AppConfig.URL_UPDATE_SHARE_COUNT;
         }
 
-        Volley.newRequestQueue(activity).add(new CustomRequest(activity,activity,
-                false, Request.Method.POST, url,
-                params, CommonUtilities.buildGuestHeaders(),
-
-
-                new com.android.volley.Response.Listener() {
-
-                    @Override
-                    public void onResponse(Object response) {
-                        JSONObject jsonObject = (JSONObject) response;
-                        JsonSeparator js= new JsonSeparator(activity,jsonObject);
-
-                        try {
-                            if(js.isError()){
-
-                                Toast.makeText(activity,js.getMessage().toString(),Toast.LENGTH_LONG).show();
-                            }else{
-
-                                //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
-
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-
-                    }
-
-
-                }, new com.android.volley.Response.ErrorListener() {
-
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-                Toast.makeText(activity,error.toString(),Toast.LENGTH_LONG).show();
-
-            }
-        }));
+//        Volley.newRequestQueue(activity).add(new CustomRequest(activity,activity,
+//                false, Request.Method.POST, url,
+//                params, CommonUtilities.buildGuestHeaders(),
+//
+//
+//                new com.android.volley.Response.Listener() {
+//
+//                    @Override
+//                    public void onResponse(Object response) {
+//                        JSONObject jsonObject = (JSONObject) response;
+//                        JsonSeparator js= new JsonSeparator(activity,jsonObject);
+//
+//                        try {
+//                            if(js.isError()){
+//
+//                                Toast.makeText(activity,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+//                            }else{
+//
+//                                //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
+//
+//                            }
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//
+//                    }
+//
+//
+//                }, new com.android.volley.Response.ErrorListener() {
+//
+//
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//
+//                Toast.makeText(activity,error.toString(),Toast.LENGTH_LONG).show();
+//
+//            }
+//        }));
 
 
 

@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.CardView;
@@ -20,13 +21,16 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,11 +40,15 @@ import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.crashlytics.android.Crashlytics;
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.github.curioustechizen.ago.RelativeTimeTextView;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
 import com.mikepenz.community_material_typeface_library.CommunityMaterial;
@@ -66,6 +74,7 @@ import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.fabric.sdk.android.Fabric;
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
@@ -75,6 +84,30 @@ import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.SessionManager;
 import sourabh.menwillbemen.helper.Util;
+
+import static android.R.attr.type;
+import static sourabh.menwillbemen.app.AppConfig.ARG_PARAM_CATEGORY_ID;
+import static sourabh.menwillbemen.app.AppConfig.ARG_PARAM_CURRENT_ITEM_INDEX;
+import static sourabh.menwillbemen.app.AppConfig.ARG_PARAM_POSITION;
+import static sourabh.menwillbemen.app.AppConfig.ARG_PARAM_POST_DATA;
+import static sourabh.menwillbemen.app.AppConfig.ARG_PARAM_TYPE;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_APP_SHARED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_CATEGORY;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_LIKED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_SHARED_TO_EXTERNAL;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_SHARED_TO_WHATSAPP;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_UNLIKED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_USER_ID;
+import static sourabh.menwillbemen.app.AppConfig.KEY_LIKE;
+import static sourabh.menwillbemen.app.AppConfig.KEY_SHARE;
+import static sourabh.menwillbemen.app.AppConfig.KEY_UNLIKE;
+import static sourabh.menwillbemen.app.AppConfig.KEY_WHATSAPP;
+import static sourabh.menwillbemen.app.AppConfig.URL_GET_POSTS;
+import static sourabh.menwillbemen.app.AppConfig.URL_LIKE_POST;
+import static sourabh.menwillbemen.app.AppConfig.URL_UNLIKE_POST;
+import static sourabh.menwillbemen.app.AppConfig.URL_UPDATE_SHARE_COUNT;
+import static sourabh.menwillbemen.app.AppConfig.URL_UPDATE_WHATSAPP_COUNT;
+
 
 public class SwypeActivity extends BaseActivity {
 
@@ -111,6 +144,11 @@ public class SwypeActivity extends BaseActivity {
     PostsData postsData;
     boolean endOFPosts;
     InterstitialAd mInterstitialAd;
+    String type;
+    String TAG = SwypeActivity.class.getSimpleName();
+    private FirebaseAnalytics mFirebaseAnalytics;
+    Snackbar snackbar;
+
 
 
     final Target target = new Target() {
@@ -120,6 +158,9 @@ public class SwypeActivity extends BaseActivity {
             BitmapDrawable bg = new BitmapDrawable(context.getResources(), bitmap);
             bg.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
             linearLayoutBackground.setBackgroundDrawable(bg);
+
+            Log.d(TAG,"onBitmapLoaded");
+
         }
 
         @Override
@@ -137,6 +178,7 @@ public class SwypeActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_swype);
+        Log.d(TAG,"onCreate");
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -150,10 +192,13 @@ public class SwypeActivity extends BaseActivity {
         context = getApplicationContext();
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         sessionManager = new SessionManager(context);
+        Fabric.with(this, new Crashlytics());
 
-        postItemDataList = (List<PostItemData>) getIntent().getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA);
-        position = getIntent().getIntExtra(AppConfig.ARG_PARAM_POSITION,0);
-        categoryId = getIntent().getStringExtra(AppConfig.ARG_PARAM_CATEGORY_ID);
+        postItemDataList = (List<PostItemData>) getIntent().getSerializableExtra(ARG_PARAM_POST_DATA);
+        position = getIntent().getIntExtra(ARG_PARAM_POSITION,0);
+        categoryId = getIntent().getStringExtra(ARG_PARAM_CATEGORY_ID);
+        type = getIntent().getStringExtra(ARG_PARAM_TYPE);
+
 
 
 
@@ -166,6 +211,8 @@ public class SwypeActivity extends BaseActivity {
             loadBackgroundImage(linearLayoutBackground);
         }
 
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
     }
 
     void setAdapter()
@@ -177,6 +224,9 @@ public class SwypeActivity extends BaseActivity {
 //        viewPagerArrowIndicator.bind(mViewPager);
 
         mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            //declare key
+            Boolean first = true;
 
             @Override
             public void onPageSelected(int page_no) {
@@ -194,13 +244,18 @@ public class SwypeActivity extends BaseActivity {
                     pageNo++;
 
                     if(!endOFPosts){
-                        getPosts(String.valueOf(categoryId), true,pageNo);
+                        getPosts(String.valueOf(categoryId),pageNo,false);
                     }
                 }
             }
 
             @Override
-            public void onPageScrolled(int arg0, float arg1, int arg2) {
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                if (first && positionOffset == 0 && positionOffsetPixels == 0){
+                    onPageSelected(0);
+                    first = false;
+                }
             }
 
             @Override
@@ -213,6 +268,7 @@ public class SwypeActivity extends BaseActivity {
 
     void initialiseInterstitialAd(){
 
+        Log.d(TAG,"initialiseInterstitialAd");
 
         mInterstitialAd = new InterstitialAd(this);
 
@@ -220,7 +276,7 @@ public class SwypeActivity extends BaseActivity {
         mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         AdRequest adRequest = new AdRequest.Builder()
-//                .addTestDevice()
+                .addTestDevice("BCDCAE3C6F97EF417DD1D5FFB4F86E3E")
                 .build();
 
         // Load ads into Interstitial Ads
@@ -274,6 +330,7 @@ public class SwypeActivity extends BaseActivity {
     }
 
     public void onItemChanged() {
+        Log.d(TAG,"onItemChanged");
 
         mSectionsPagerAdapter.notifyDataSetChanged();
 
@@ -281,15 +338,36 @@ public class SwypeActivity extends BaseActivity {
 
 
 
-    public void  getPosts(String category_id, boolean toShowLoading, int pageNo)
+    public void  getPosts(String category_id, int pageNo, boolean shouldCache)
     {
 
-        String URL = AppConfig.URL_GET_POSTS
+
+
+        String URL = URL_GET_POSTS
                 +sessionManager.getSelectedLanguageId()+"/"
-                +category_id+"/"+String.valueOf(pageNo);
+                +category_id+"/"
+                +type+"/"
+                +String.valueOf(pageNo);
+
+        Log.d(TAG,"getPosts "+URL);
+
+
+//        final YoYo.YoYoString yoYo =  YoYo.with(Techniques.Pulse)
+//                                .duration(1000)
+//                                .repeat(AppConfig.LARGE_NUMBER)
+//                                .playOn(mViewPager);
+
+
+        snackbar = Snackbar
+                .make(getWindow().getDecorView().getRootView(),
+                        R.string.loading_more, Snackbar.LENGTH_INDEFINITE)
+                ;
+
+        snackbar.show();
+
 
         Volley.newRequestQueue(context).add(new CustomRequest(this,this,
-                toShowLoading, Request.Method.GET, URL,
+                false, Request.Method.GET, URL,shouldCache,
                 CommonUtilities.buildBlankParams(), CommonUtilities.buildHeaders(context),
 
 
@@ -297,14 +375,18 @@ public class SwypeActivity extends BaseActivity {
 
                     @Override
                     public void onResponse(Object response) {
+//                        yoYo.stop();
+                        snackbar.dismiss();
+
+                        Log.d(TAG,"getPosts got responce ");
+
                         JSONObject jsonObject = (JSONObject) response;
                         JsonSeparator js= new JsonSeparator(context,jsonObject);
 
                         try {
                             if(js.isError()){
-                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+//                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
 //                                endOFPosts();
-                                    endOFPosts = true;
                             }else{
 
                                 //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
@@ -324,6 +406,8 @@ public class SwypeActivity extends BaseActivity {
 
             @Override
             public void onErrorResponse(VolleyError error) {
+//                yoYo.stop();
+                snackbar.dismiss();
 
                 Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
 
@@ -334,14 +418,49 @@ public class SwypeActivity extends BaseActivity {
 
     public void  parsePostsJson(JSONObject jsonObject){
 
+        Log.d(TAG,"parsePostsJson");
 
         postsData = CommonUtilities.getObjectFromJson(jsonObject, PostsData.class);
 
-        postItemDataList.addAll(addColorsToPosts(postsData.getLatest()));
+        if(type.equals(AppConfig.KEY_TYPE_LATEST)){
 
-        mSectionsPagerAdapter.notifyDataSetChanged();
+            if(postsData.getLatest().size()==0) {
+                endOfPosts();
+                snackbar.show();
+            }else{
+                postItemDataList.addAll(addColorsToPosts(postsData.getLatest()));
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
+        }
+
+        if(type.equals(AppConfig.KEY_TYPE_TOP)){
+
+            if(postsData.getTop().size()==0) {
+                endOfPosts();
+                snackbar.show();
+
+            }else{
+                postItemDataList.addAll(addColorsToPosts(postsData.getTop()));
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
+        }
 
 
+
+    }
+
+    void endOfPosts(){
+
+        endOFPosts = true;
+        snackbar = Snackbar
+                .make(getWindow().getDecorView().getRootView(),
+                        R.string.no_more_msgs, Snackbar.LENGTH_SHORT)
+        ;
+
+    }
+
+    public int totalItems(){
+        return postItemDataList.size();
     }
 
     /**
@@ -366,7 +485,8 @@ public class SwypeActivity extends BaseActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(postItemDataList.get(position));
+            Log.d(TAG,"getItem");
+            return PlaceholderFragment.newInstance(postItemDataList.get(position),position+1);
         }
 
         @Override
@@ -390,6 +510,8 @@ public class SwypeActivity extends BaseActivity {
     }
 
     List<PostItemData> addColorsToPosts(List<PostItemData> postItemDatas){
+
+        Log.d(TAG,"addColorsToPosts");
 
 //        List<PostItemData> postItemDataList = new ArrayList<>();
         for (PostItemData postItemData:postItemDatas) {
@@ -460,13 +582,15 @@ public class SwypeActivity extends BaseActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_swype_animation) {
 
-            final String animations[] =getResources().getStringArray(R.array.SwypeAnimations);
-            int activeIndex = Arrays.asList(animations)
+            final String animationsValue[] =getResources().getStringArray(R.array.SwypeAnimationsDescription);
+            final String animationsKey[] =getResources().getStringArray(R.array.SwypeAnimations);
+
+            int activeIndex = Arrays.asList(animationsKey)
                     .indexOf(sharedPref.getString(getResources().getString(R.string.pref_key_swype_animation),""));
 
             new MaterialDialog.Builder(this)
                     .title("Choose Style")
-                    .items(animations)
+                    .items(animationsValue)
                     .itemsCallbackSingleChoice(activeIndex, new MaterialDialog.ListCallbackSingleChoice() {
                         @Override
                         public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
@@ -477,7 +601,7 @@ public class SwypeActivity extends BaseActivity {
 
 
                             SharedPreferences.Editor editor = sharedPref.edit();
-                            editor.putString(getResources().getString(R.string.pref_key_swype_animation),animations[which]);
+                            editor.putString(getResources().getString(R.string.pref_key_swype_animation),animationsKey[which]);
                             editor.commit();
 
                             setSwypeAnimation();
@@ -485,6 +609,31 @@ public class SwypeActivity extends BaseActivity {
                         }
                     })
                     .show();
+            return true;
+        }
+
+        if (id == R.id.action_share) {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+
+            String text = "Download App";
+            sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+            sendIntent.setType("text/plain");
+
+            startActivity(sendIntent);
+
+
+
+            Bundle bundle = new Bundle();
+            bundle.putString(FIREBASE_KEY_USER_ID, sessionManager.getUserId());
+            mFirebaseAnalytics.logEvent(FIREBASE_KEY_APP_SHARED, bundle);
+
+
+//                countShare.setText(String.valueOf(
+//                        (postItemDataList.get(position).getPost_share_count()+1)));
+
+            Log.d(TAG,"share clicked");
+
             return true;
         }
 
@@ -505,7 +654,7 @@ public class SwypeActivity extends BaseActivity {
         TextView statusMsg;
 
         @BindView(R.id.card_detailed_post)
-        CardView cardView;
+        LinearLayout cardView;
 
         @BindView(R.id.adView)
         AdView mAdView;
@@ -517,6 +666,9 @@ public class SwypeActivity extends BaseActivity {
 
         @BindView(R.id.count_likes)
         TextView countLikes;
+
+        @BindView(R.id.txtCount)
+        TextView txtCount;
 
         @BindView(R.id.whatsapp_button)
         IconicsImageView whatsapp_button;
@@ -542,19 +694,24 @@ public class SwypeActivity extends BaseActivity {
         AdRequest adRequest;
 
         SharedPreferences sharedPref;
+        private FirebaseAnalytics mFirebaseAnalytics;
 
         public PlaceholderFragment() {
         }
 
         /**
          * Returns a new instance of this fragment for the given section
+         * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(PostItemData postItemData)
+        public static PlaceholderFragment newInstance(PostItemData postItemData, int current_item_index)
         {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
-            args.putSerializable(AppConfig.ARG_PARAM_POST_DATA, postItemData);
+            args.putSerializable(ARG_PARAM_POST_DATA, postItemData);
+//            args.putInt(ARG_PARAM_TOTAL_ITEMS, total_items);
+            args.putInt(ARG_PARAM_CURRENT_ITEM_INDEX, current_item_index);
+
             fragment.setArguments(args);
             return fragment;
         }
@@ -585,8 +742,12 @@ public class SwypeActivity extends BaseActivity {
             ButterKnife.bind(this, rootView);
             context = getContext();
             adRequest = new AdRequest.Builder().build();
+            mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 
-            final PostItemData postItemData = (PostItemData) getArguments().getSerializable(AppConfig.ARG_PARAM_POST_DATA);
+
+            final PostItemData postItemData = (PostItemData) getArguments().getSerializable(ARG_PARAM_POST_DATA);
+//            final int  total_items =  getArguments().getInt(ARG_PARAM_TOTAL_ITEMS);
+            final int current_item_index =  getArguments().getInt(ARG_PARAM_CURRENT_ITEM_INDEX);
 
             sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
 
@@ -599,13 +760,18 @@ public class SwypeActivity extends BaseActivity {
             }
 
 
+
             int color = postItemData.getCard_color();
 
 
-            countWhatsApp.setText(postItemData.getPost_whatsapp_count().toString());
-            countShare.setText(postItemData.getPost_share_count().toString());
-            countLikes.setText(postItemData.getPost_likes_count().toString());
+            countWhatsApp.setText(CommonUtilities.format(
+                    Long.parseLong(postItemData.getPost_whatsapp_count().toString())));
+            countShare.setText(CommonUtilities.format(
+                    Long.parseLong(postItemData.getPost_share_count().toString())));
+            countLikes.setText(CommonUtilities.format(
+                    Long.parseLong(postItemData.getPost_likes_count().toString())));
             category.setText(postItemData.getCategory_name().toString());
+            txtCount.setText(current_item_index+" / "+((SwypeActivity)getActivity()).totalItems());
 
 
             if(postItemData.getIs_liked() == 1){
@@ -626,7 +792,7 @@ public class SwypeActivity extends BaseActivity {
             }
 
 
-            cardView.setCardBackgroundColor(color);
+            cardView.setBackgroundColor(color);
             whatsapp_button.setColor(color);
             share_button.setColor(color);
 
@@ -635,7 +801,7 @@ public class SwypeActivity extends BaseActivity {
 
             if (!TextUtils.isEmpty(postItemData.getPost())) {
 
-//                int maxLines = AppConfig.MAX_LINES;
+//                int maxLines = MAX_LINES;
 //                statusMsg.setMaxLines(maxLines);
 //                statusMsg.setEllipsize(TextUtils.TruncateAt.END);
                 statusMsg.setText(postItemData.getPost());
@@ -661,7 +827,13 @@ public class SwypeActivity extends BaseActivity {
                     ((SwypeActivity )  getActivity()).onItemChanged();
 
 //                    countLikes.setText(Integer.parseInt(countLikes.getText().toString())+1);
-                    updateCount(postItemData.getId_post(),AppConfig.KEY_LIKE);
+                    updateCount(postItemData.getId_post(),KEY_LIKE);
+
+
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+                    bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+                    mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_LIKED, bundle);
 
                 }
 
@@ -673,7 +845,13 @@ public class SwypeActivity extends BaseActivity {
                     ((SwypeActivity )  getActivity()).onItemChanged();
 //                    countLikes.setText(Integer.parseInt(countLikes.getText().toString())-1);
 
-                    updateCount(postItemData.getId_post(),AppConfig.KEY_UNLIKE);
+                    updateCount(postItemData.getId_post(),KEY_UNLIKE);
+
+
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+                    bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+                    mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_UNLIKED, bundle);
 
 
                 }
@@ -698,8 +876,13 @@ public class SwypeActivity extends BaseActivity {
 
 
                     startActivity(sendIntent);
-                    updateCount(postItemData.getId_post(),AppConfig.KEY_WHATSAPP);
+                    updateCount(postItemData.getId_post(),KEY_WHATSAPP);
 
+
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+                    bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+                    mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_SHARED_TO_WHATSAPP, bundle);
 
                 }
             });
@@ -722,10 +905,15 @@ public class SwypeActivity extends BaseActivity {
 
                     startActivity(sendIntent);
 
-                    updateCount(postItemData.getId_post(),AppConfig.KEY_SHARE);
+                    updateCount(postItemData.getId_post(),KEY_SHARE);
 
 //                countShare.setText(String.valueOf(
 //                        (postItemDataList.get(position).getPost_share_count()+1)));
+
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+                    bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+                    mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_SHARED_TO_EXTERNAL, bundle);
 
                 }
             });
@@ -743,28 +931,29 @@ public class SwypeActivity extends BaseActivity {
 
         void updateCount(int post_id, String what){
 
+            what = what.trim();
 
             Map<String, String> params = new HashMap<String, String>();
             params.put("post_id", post_id+"");
 
             String url = "";
 
-            if(what.equals(AppConfig.KEY_WHATSAPP)){
-                url = AppConfig.URL_UPDATE_WHATSAPP_COUNT;
+            if(what.equals(KEY_WHATSAPP.trim())){
+                url = URL_UPDATE_WHATSAPP_COUNT;
             }
-            else if(what.equals(AppConfig.KEY_SHARE))
+            else if(what.equals(KEY_SHARE.trim()))
             {
-                url = AppConfig.URL_UPDATE_SHARE_COUNT;
+                url = URL_UPDATE_SHARE_COUNT;
             }
-            else if(what.equals(AppConfig.KEY_LIKE)){
-                url = AppConfig.URL_LIKE_POST;
+            else if(what.equals(KEY_LIKE.trim())){
+                url = URL_LIKE_POST;
             }
             else{
-                url = AppConfig.URL_UNLIKE_POST;
+                url = URL_UNLIKE_POST;
             }
 
             Volley.newRequestQueue(context).add(new CustomRequest(getActivity(),getActivity(),
-                    false, Request.Method.POST, url,
+                    false, Request.Method.POST, url,false,
                     params, CommonUtilities.buildHeaders(context),
 
 
@@ -811,7 +1000,9 @@ public class SwypeActivity extends BaseActivity {
 
 
 //            mAdView = (AdView) findViewById(R.id.adView);
-            adRequest = new AdRequest.Builder().build();
+            adRequest = new AdRequest.Builder()
+                    .addTestDevice("BCDCAE3C6F97EF417DD1D5FFB4F86E3E")
+                    .build();
             mAdView.loadAd(adRequest);
             mAdView.setAdListener(new AdListener() {
                 @Override
@@ -846,7 +1037,7 @@ public class SwypeActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         Intent data = new Intent();
-        data.putExtra(AppConfig.ARG_PARAM_POST_DATA, (Serializable) postItemDataList);
+        data.putExtra(ARG_PARAM_POST_DATA, (Serializable) postItemDataList);
         // add data to Intent
         setResult(Activity.RESULT_OK, data);
         super.onBackPressed();

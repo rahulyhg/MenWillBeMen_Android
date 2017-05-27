@@ -1,4 +1,29 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        // These docs use an open ended version so that our plugin
+        // can be updated quickly in response to Android tooling updates
+
+        // We recommend changing it to the latest version from our changelog:
+        // https://docs.fabric.io/android/changelog.html#fabric-gradle-plugin
+        classpath 'io.fabric.tools:gradle:1.+'
+    }
+}
+
+
 apply plugin: 'com.android.application'
+
+
+
+
+apply plugin: 'io.fabric'
+
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
 
 android {
     compileSdkVersion 25
@@ -32,18 +57,33 @@ dependencies {
         transitive = true
     }
 
-
     //    compile 'com.github.ViksaaSkool:AwesomeSplash:v1.0.0'
+
+    
+
+
+
+
+
+    String htextview_version = "0.1.1"
+    compile "com.hanks:htextview-base:$htextview_version"    // base library
+    compile "com.hanks:htextview-line:$htextview_version"        // optional
+    compile "com.hanks:htextview-evaporate:$htextview_version"   // optional
+
+//    compile 'com.ToxicBakery.viewpager.transforms:view-pager-transforms:1.2.32@aar'
+
 
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
+
+    
     compile 'com.ogaclejapan.smarttablayout:library:1.6.1@aar'
     compile 'com.ogaclejapan.smarttablayout:utils-v4:1.6.1@aar'
     compile 'com.ogaclejapan.smarttablayout:utils-v13:1.6.1@aar'
     compile 'com.android.support:cardview-v7:25.3.1'
     compile 'com.android.volley:volley:1.0.0'
     compile 'de.hdodenhof:circleimageview:2.1.0'
-    compile 'com.google.firebase:firebase-ads:10.0.1'
+    compile 'com.google.firebase:firebase-ads:10.2.6'
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.mikepenz:iconics-core:2.8.2@aar'
     compile 'com.mikepenz:google-material-typeface:3.0.1.0.original@aar'
@@ -63,23 +103,26 @@ dependencies {
     compile 'me.gujun.android.taggroup:library:1.4@aar'
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.android.support:support-vector-drawable:25.3.1'
-    compile 'com.google.firebase:firebase-messaging:10.0.1'
-
+    compile 'com.google.firebase:firebase-messaging:10.2.6'
     compile 'com.karumi:dexter:4.1.0'
     compile 'jp.wasabeef:recyclerview-animators:2.2.6'
-
     compile 'com.eftimoff:android-viewpager-transformers:1.0.1@aar'
     compile 'com.github.sembozdemir:ViewPagerArrowIndicator:1.0.0'
-
     compile 'com.github.clockbyte:admobadapter:1.4.1'
+    compile 'com.google.firebase:firebase-core:10.2.6'
 
-    String htextview_version = "0.1.1"
-    compile "com.hanks:htextview-base:$htextview_version"    // base library
-    compile "com.hanks:htextview-line:$htextview_version"        // optional
-    compile "com.hanks:htextview-evaporate:$htextview_version"   // optional
+    compile ('com.github.worker8:tourguide:1.0.17-SNAPSHOT@aar'){
+        transitive=true}
 
-//    compile 'com.ToxicBakery.viewpager.transforms:view-pager-transforms:1.2.32@aar'
+    compile 'com.github.sd6352051:NiftyDialogEffects:1.0.0'
 
+    compile 'com.daimajia.easing:library:2.0@aar'
+    compile 'com.daimajia.androidanimations:library:2.2@aar'
+
+
+    compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
+        transitive = true;
+    }
 
     testCompile 'junit:junit:4.12'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
@@ -89,4 +132,6 @@ dependencies {
 
 
 
+
 apply plugin: 'com.google.gms.google-services'
+

@@ -34,7 +34,6 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import sourabh.menwillbemen.R;
-import sourabh.menwillbemen.activity.DetailedPostActivity;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.helper.CommonUtilities;

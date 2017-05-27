@@ -4,9 +4,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
+    <!--<uses-permission android:name="android.permission.GET_ACCOUNTS" />-->
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:name=".app.AppController"
         android:allowBackup="true"
@@ -17,6 +18,8 @@
         <activity
             android:name=".activity.HomeActivity"
             android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher"
+
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan" >
             >
@@ -28,14 +31,6 @@
             <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             <!-- </intent-filter> -->
         </activity>
-        <activity
-            android:name=".activity.DetailedPostActivity"
-            android:label="@string/title_activity_detailed_post"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".activity.PostsActivity"
-            android:label="@string/title_activity_posts"
-            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".activity.SplashScreenActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -63,7 +58,16 @@
         <activity
             android:name=".activity.SwypeActivity"
             android:label="@string/title_activity_swype"
+            android:icon="@mipmap/ic_launcher"
+
             android:theme="@style/AppTheme.NoActionBar"></activity>
+
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="d283451b8ee8c2e0a2fd309484e65ef82af86eb2"
+            />
+
     </application>
 
 </manifest>

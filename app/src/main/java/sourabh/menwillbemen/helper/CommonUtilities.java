@@ -15,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
@@ -42,8 +43,11 @@ import java.util.regex.Pattern;
 
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.app.AppConfig;
+import sourabh.menwillbemen.data.CategoryData;
 import sourabh.menwillbemen.data.LanguageData;
 import sourabh.menwillbemen.data.SettingData;
+
+import static java.security.AccessController.getContext;
 
 
 public final class CommonUtilities {
@@ -158,31 +162,31 @@ public final class CommonUtilities {
 //     * @param status - success/failure (used to set icon)
 //     * 				 - pass null if you don't want icon
 //     * */
-//    public static void showAlertDialog(Context context, String title, String message,
-//                                Boolean status ) {
-//        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-//
-//        // Setting Dialog Title
-//        alertDialog.setTitle(title);
-//
-//        // Setting Dialog Message
-//        alertDialog.setMessage(message);
-//
-//        if(status != null)
-//            // Setting alert dialog icon
+    public static void showAlertDialog(Context context, String title, String message,
+                                Boolean status ) {
+        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+
+        // Setting Dialog Title
+        alertDialog.setTitle(title);
+
+        // Setting Dialog Message
+        alertDialog.setMessage(message);
+
+        if(status != null)
+            // Setting alert dialog icon
 //            alertDialog.setIcon((status) ? R.drawable.success : R.drawable.fail);
-//
-//        // Setting OK Button
-//        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int which) {
-//
-//
-//            }
-//        });
-//
-//        // Showing Alert Message
-//        alertDialog.show();
-//    }
+
+        // Setting OK Button
+        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+
+
+            }
+        });
+
+        // Showing Alert Message
+        alertDialog.show();
+    }
 
 
     /**
@@ -243,6 +247,10 @@ public final class CommonUtilities {
         return dip * scale + 0.5f;
     }
 
+    public static String getUniqueAndroidDeviceId(Context context){
+        return Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+    }
 
 
 //    public static Map<String,String> buildParams(String... strParams) {
@@ -295,6 +303,7 @@ public final class CommonUtilities {
 
 
 
+
 //    public static String getJsonStringFromObject(Object object) {
 //
 //        return new Gson().toJson(object);
@@ -327,7 +336,15 @@ public final class CommonUtilities {
         return language_array;
     }
 
+    public static String[] convertCategoryListToCategoryArray(List<CategoryData> categoryDataList){
 
+        String [] language_array = new String[categoryDataList.size()];
+        for (int i = 0; i <categoryDataList.size();i++){
+
+            language_array[i]= categoryDataList.get(i).getCategory_name();
+        }
+        return language_array;
+    }
 
     public static <T> T getObjectFromJson(JSONObject jsonString, Class<T> clazz) {
 

@@ -21,8 +21,11 @@ public class AppConfig {
 
 	static String VERSION = "/v1/";
 
+
+
 //	public static final String BASE = "http://192.168.42.164/menwillbemen_web" + VERSION;
-	public static final String BASE = "http://192.168.1.101/menwillbemen_web" + VERSION;
+//	public static final String BASE = "http://192.168.1.101/menwillbemen_web" + VERSION;
+	public static final String BASE = "http://aws-bitnami-server.bitnamiapp.com/menwillbemen_web" + VERSION;
 
 
 	public static String URL_GET_CITIES = BASE + "get_cities/";
@@ -32,6 +35,8 @@ public class AppConfig {
 	public static String URL_NO_IMAGE = IMAGES_BASE + "no_image_icon.png";
 
 	public static String URL_GET_POSTS = BASE + "get_posts/";
+	public static String URL_ADD_POST = BASE + "add_post";
+	public static String URL_SUBMIT_FEEDBACK = BASE + "submit_feedback";
 
 
 	public static String URL_GET_LANUGAGES = BASE + "get_languages";
@@ -103,11 +108,15 @@ public class AppConfig {
 
 	public static final String API_KEY_GUEST= "guest";
 	public static final String ARG_PARAM_POST_DATA= "POST_DATA";
+	public static final String ARG_PARAM_TOTAL_ITEMS= "total_items";
+	public static final String ARG_PARAM_CURRENT_ITEM_INDEX= "current_item_index";
+
 	public static final String ARG_PARAM_POSITION= "POSITION";
 	public static final String ARG_PARAM_IS_LATEST_POST_FRAGMENT= "IS_LATEST_POST_FRAGMENT";
 	public static final String ARG_PARAM_IS_HOME= "IS_HOME";
 	public static final String ARG_BACKGROUND_IMAGE = "background_image";
 	public static final String ARG_PARAM_CATEGORY_ID= "category_id";
+	public static final String ARG_PARAM_TYPE= "type";
 
 	public static final String KEY_LEFT_HEADER_IMAGE = "left_header_image";
 	public static final String KEY_RIGHT_HEADER_IMAGE = "right_header_image";
@@ -121,6 +130,7 @@ public class AppConfig {
 	// id to handle the notification in the notification tray
 	public static final int KEY_NOTIFICATION_ID = 100;
 	public static final int KEY_NOTIFICATION_ID_BIG_IMAGE = 101;
+	public static final String KEY_CACHE_HIT = "cache-hit";
 
 	public static final String KEY_SETTINGS_CHANGED = "settings_changed";
 
@@ -147,6 +157,23 @@ public class AppConfig {
 
 	public static final String KEY_INTERSTITIAL_ITERATIONS = "interstitial_iterations";
 	public static final String KEY_NATIVE_ITERATIONS = "native_iterations";
+	public static final String KEY_TYPE_LATEST= "latest";
+	public static final String KEY_TYPE_TOP= "top";
+
+
+	public static String FIREBASE_KEY_LANGUAGE_SELECTED = "language_selected";
+	public static String FIREBASE_KEY_TAPPED_ON_DETAILED_POST = "tapped_on_detailed_post";
+	public static String FIREBASE_KEY_CATEGORY = "category";
+	public static String FIREBASE_KEY_POST_LIKED = "post_liked";
+	public static String FIREBASE_KEY_POST_UNLIKED = "post_unliked";
+	public static String FIREBASE_KEY_POST_SHARED_TO_WHATSAPP = "post_shared_to_whatsapp";
+	public static String FIREBASE_KEY_POST_SHARED_TO_EXTERNAL = "post_shared_to_external";
+	public static String FIREBASE_KEY_APP_SHARED = "app_shared";
+	public static String FIREBASE_KEY_USER_ID = "user_id";
+
+	public static String CRASHLYTICS_KEY_ERROR_CODE = "error_code";
+	public static String CRASHLYTICS_KEY_ERROR = "error";
+
 
 	public static int TIMER = 8000;
 	public static int MAX_LINES = 6;

@@ -16,11 +16,11 @@
     card_view:cardElevation="5dp"
     card_view:cardCornerRadius="5dp"
     card_view:cardPreventCornerOverlap="false"
-    card_view:cardBackgroundColor="@color/colorDeepOrange"
     android:foreground="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:id="@+id/card"
     android:orientation="vertical"
+    card_view:cardBackgroundColor="@color/colorPrimary"
 
 
     >
@@ -153,25 +153,44 @@
             </LinearLayout>
         </LinearLayout>
 
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" >
 
 
-        <TextView
-            android:id="@+id/txtStatusMsg"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="5dp"
-            android:paddingLeft="@dimen/feed_item_status_pad_left_right"
-            android:paddingRight="@dimen/feed_item_status_pad_left_right"
-            android:paddingTop="@dimen/feed_item_status_pad_top"
-            android:paddingEnd="@dimen/feed_item_status_pad_top"
-            android:textSize="18sp"
-            android:text="Post"
-            android:backgroundTint="@color/colorDeepOrange"
-            android:textColor="@color/colorWhite"
 
-            />
+                <!--<ImageView-->
+                    <!--android:id="@+id/image_card_background"-->
+                    <!--android:layout_width="fill_parent"-->
+                    <!--android:layout_height="250dp"-->
+                    <!--android:scaleType="fitXY"-->
+                    <!--android:background="@color/colorAccent"-->
+                    <!--android:src="@drawable/earphone"-->
+                    <!--android:layout_alignParentTop="true"-->
+                    <!--android:layout_alignParentLeft="true"-->
+                    <!--android:layout_alignParentStart="true" />-->
 
-        <TextView
+                <TextView
+                    android:id="@+id/txtStatusMsg"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="5dp"
+                    android:paddingLeft="@dimen/feed_item_status_pad_left_right"
+                    android:paddingRight="@dimen/feed_item_status_pad_left_right"
+                    android:paddingTop="@dimen/feed_item_status_pad_top"
+                    android:paddingEnd="@dimen/feed_item_status_pad_top"
+                    android:textSize="18sp"
+                    android:text="Post"
+                    android:gravity="center"
+                    android:backgroundTint="@color/colorDeepOrange"
+                    android:textColor="@color/colorWhite"
+
+                    />
+
+            </RelativeLayout>
+
+            <TextView
             android:id="@+id/txtUrl"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

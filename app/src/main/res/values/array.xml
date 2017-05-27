@@ -326,24 +326,24 @@
         <!--<item>Medium</item>-->
         <!--<item>Large</item>-->
 
-        <item>AccordionTransformer</item>
-        <item>BackgroundToForegroundTransformer</item>
-        <item>CubeInTransformer</item>
-        <item>CubeOutTransformer</item>
-        <item>DefaultTransformer</item>
-        <item>DepthPageTransformer</item>
-        <item>DrawFromBackTransformer</item>
-        <item>FlipHorizontalTransformer</item>
-        <item>FlipVerticalTransformer</item>
-        <item>ForegroundToBackgroundTransformer</item>
-        <item>ParallaxPageTransformer</item>
-        <item>RotateDownTransformer</item>
-        <item>RotateUpTransformer</item>
-        <item>StackTransformer</item>
-        <item>TabletTransformer</item>
-        <item>ZoomInTransformer</item>
-        <item> ZoomOutSlideTransformer</item>
-        <item>ZoomOutTranformer</item>
+        <item>Accordion</item>
+        <item>Background To Foregroundr</item>
+        <item>Cube In</item>
+        <item>Cube Out</item>
+        <item>Default</item>
+        <item>Depth Page</item>
+        <item>Draw From Back</item>
+        <item>Flip Horizontal</item>
+        <item>Flip Vertical</item>
+        <item>Foreground To Background</item>
+        <item>Parallax Page</item>
+        <item>Rotate Down</item>
+        <item>Rotate Up</item>
+        <item>Stack</item>
+        <item>Tablet</item>
+        <item>Zoom In</item>
+        <item>Zoom Out Slide</item>
+        <item>Zoom Out</item>
     </string-array>
 
 

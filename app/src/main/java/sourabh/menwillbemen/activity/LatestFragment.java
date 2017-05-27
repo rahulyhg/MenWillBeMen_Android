@@ -1,5 +1,6 @@
 package sourabh.menwillbemen.activity;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
@@ -9,27 +10,43 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.Volley;
 import com.clockbyte.admobadapter.expressads.AdmobExpressRecyclerAdapterWrapper;
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.NativeExpressAdView;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -38,14 +55,26 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import io.fabric.sdk.android.Fabric;
+//import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
+//import retrofit2.Call;
+//import retrofit2.Callback;
+//import retrofit2.Response;
 import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
+import jp.wasabeef.recyclerview.adapters.SlideInRightAnimationAdapter;
 import sourabh.menwillbemen.R;
 
 import sourabh.menwillbemen.adapter.PostRecyclerViewAdapter;
 import sourabh.menwillbemen.app.AppConfig;
+import sourabh.menwillbemen.app.AppController;
+import sourabh.menwillbemen.app.CacheRequest;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.data.PostsData;
@@ -53,6 +82,22 @@ import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.SessionManager;
 import sourabh.menwillbemen.helper.Util;
+
+import static android.media.CamcorderProfile.get;
+import static java.security.AccessController.getContext;
+import static sourabh.menwillbemen.R.id.latest_fragment;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_CATEGORY;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_LIKED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_SHARED_TO_EXTERNAL;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_SHARED_TO_WHATSAPP;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_UNLIKED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_TAPPED_ON_DETAILED_POST;
+import static sourabh.menwillbemen.app.AppConfig.KEY_LIKE;
+import static sourabh.menwillbemen.app.AppConfig.KEY_SHARE;
+import static sourabh.menwillbemen.app.AppConfig.KEY_WHATSAPP;
+import static sourabh.menwillbemen.app.AppConfig.URL_LIKE_POST;
+import static sourabh.menwillbemen.app.AppConfig.URL_UPDATE_SHARE_COUNT;
+import static sourabh.menwillbemen.app.AppConfig.URL_UPDATE_WHATSAPP_COUNT;
 
 
 /**
@@ -99,14 +144,50 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
     boolean isBlankRefresh;
     RelativeLayout relativeLayoutList;
     AdmobExpressRecyclerAdapterWrapper adapterWrapper;
+    String TAG = LatestFragment.class.getSimpleName();
+    private long mRequestStartTime;
+    String type;
+
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    Activity activity;
+    boolean firstTimeGetPosts = true;
+    FrameLayout latest_fragment;
+    Snackbar snackbar;
 
     final Target target = new Target() {
         @Override
-        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+        public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
+
+//            Animation fadeIn = AnimationUtils.loadAnimation(activity, R.anim.fade_in);
+//            relativeLayoutList.startAnimation(fadeIn);
 
             BitmapDrawable bg = new BitmapDrawable(context.getResources(), bitmap);
             bg.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
             relativeLayoutList.setBackgroundDrawable(bg);
+
+//            fadeIn.setAnimationListener(new Animation.AnimationListener() {
+//                @Override
+//                public void onAnimationStart(Animation animation) {
+//                }
+//                @Override
+//                public void onAnimationEnd(Animation animation) {
+//
+//
+//
+//
+//                    Animation fadeOut = AnimationUtils.loadAnimation(activity, R.anim.fade_in);
+//                    relativeLayoutList.startAnimation(fadeOut);
+//                }
+//                @Override
+//                public void onAnimationRepeat(Animation animation) {
+//                }
+//            });
+
+
+
+
+            Log.d(TAG,"Bitmap Loaded");
         }
 
         @Override
@@ -169,14 +250,13 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Log.d("Home","onActivityCreated");
+        Log.d(TAG,"onActivityCreated");
 
         view.post(new Runnable() {
             public void run() {
             /* the desired UI update */
                 showAd(view);
                 initialiseRecyclerView();
-                getPosts(((HomeActivity)getActivity()).getActiveCategoryId(), false,pageNo);
 
 //                loadRecyclerViewData();
             }
@@ -185,6 +265,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         // Update the RecyclerView item's list with menu items and Native Express ads.
 
 
+        Fabric.with(activity, new Crashlytics());
 
 
     }
@@ -193,16 +274,22 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        Log.d("Home","onCreateView");
+        Log.d(TAG,"onCreateView");
 
         view = inflater.inflate(R.layout.fragment_latest, container, false);
         recyclerView = (XRecyclerView) view.findViewById(R.id.list);
         relativeLayoutList = (RelativeLayout) view.findViewById(R.id.RelativeLayoutList);
+        latest_fragment = (FrameLayout) view.findViewById(R.id.latest_fragment);
+
 
         context = getContext();
+        activity = getActivity();
         sessionManager = new SessionManager(context);
 
         MobileAds.initialize(context, getString(R.string.admob_app_id));
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
 
 
 
@@ -214,10 +301,20 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         }
 
+        if(isLatestFragment){
+            type = AppConfig.KEY_TYPE_LATEST;
+        }else{
+            type = AppConfig.KEY_TYPE_TOP;
+        }
+        getPosts(((HomeActivity)activity).getActiveCategoryId(), type,false,pageNo,false);
+
+
         background_image = sessionManager.getBackgroundImage();
         if(background_image != null){
             loadBackgroundImage(relativeLayoutList);
         }
+
+
 
 
 
@@ -230,16 +327,16 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
 
 
-        Picasso.with(getActivity()).load(background_image).
+        Picasso.with(activity).load(background_image).
         into(target);
 
     }
 
 
     void initialiseRecyclerView(){
-        Log.d("Home","loadRecyclerViewData");
+        Log.d(TAG,"initialiseRecyclerView");
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
 
         adapterWrapper = new AdmobExpressRecyclerAdapterWrapper(context,getString(R.string.native_medium_ad_unit_id),
                 new AdSize(AdSize.FULL_WIDTH,150))
@@ -316,7 +413,12 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         recyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.getItemAnimator().setChangeDuration(0);
+        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
+        recyclerView.setItemViewCacheSize(20);
+        recyclerView.setDrawingCacheEnabled(true);
+        recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
 
 
@@ -333,15 +435,15 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         try{
             textSize = Float.valueOf(sharedPref.getString
-                    (getActivity().getResources().getString(R.string.pref_key_fontsize), ""));
+                    (activity.getResources().getString(R.string.pref_key_fontsize), ""));
 
         }catch (Exception ex){
 
         }
 
-        postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(),((HomeActivity)getActivity()).getActiveCategoryId(),
-                mRecyclerViewItems,textSize,this);
-
+        postRecyclerViewAdapter = new PostRecyclerViewAdapter(activity,type, ((HomeActivity)activity).getActiveCategoryId(),
+                mRecyclerViewItems,textSize,this,mFirebaseAnalytics);
+        postRecyclerViewAdapter.setHasStableIds(true);
 
         adapterWrapper.setAdapter(postRecyclerViewAdapter);
 
@@ -350,20 +452,14 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         adapterWrapper.setFirstAdIndex(sessionManager.getNativeIterations());
 
 
-        if(sharedPref.getBoolean(getActivity().getResources().getString(R.string.pref_key_animation),true)){
+        if(sharedPref.getBoolean(activity.getResources().getString(R.string.pref_key_animation),true)){
 
-            ScaleInAnimationAdapter alphaAdapter = new ScaleInAnimationAdapter(adapterWrapper);
+            SlideInRightAnimationAdapter alphaAdapter = new SlideInRightAnimationAdapter(adapterWrapper);
             alphaAdapter.setDuration(200);
             recyclerView.setAdapter(alphaAdapter);
         }else{
             recyclerView.setAdapter(adapterWrapper);
         }
-
-
-
-
-
-
 
 
         recyclerView.setLoadingListener(new XRecyclerView.LoadingListener() {
@@ -379,7 +475,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
                     apppend = false;
 
                     recyclerView.setLoadingMoreEnabled(true);
-                    getPosts(((HomeActivity)getActivity()).getActiveCategoryId(), false,pageNo);
+                    getPosts(((HomeActivity)activity).getActiveCategoryId(), type,false,pageNo,false);
                 }
 
             }
@@ -391,7 +487,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
                 apppend = true ;
                 toAppendOrRefresh = true;
 
-                getPosts(((HomeActivity)getActivity()).getActiveCategoryId(), false,pageNo);
+                getPosts(((HomeActivity)activity).getActiveCategoryId(),type, false,pageNo,false);
 
             }
         });
@@ -401,17 +497,30 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         recyclerView.refresh();
 
 
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+                if (dy > 0)
+                    ((HomeActivity)activity).hideFab();
+                else if (dy < 0)
+                    ((HomeActivity)activity).showFab();
+            }
+        });
+
 
 
     }
 
     void addHeaders(){
 
-        View header = getActivity().getLayoutInflater().inflate(R.layout.drawer_header,null);
+        View header = activity.getLayoutInflater().inflate(R.layout.drawer_header,null);
         recyclerView.addHeaderView(header);
 
     }
     void loadRecyclerViewData(){
+
+        Log.d(TAG,"loadRecyclerViewData");
+
 
         if(mRecyclerViewItems != null){
             mRecyclerViewItems.clear();
@@ -421,10 +530,10 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         if(isLatestFragment){
             mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
-//            postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(), mRecyclerViewItems,textSize);
+//            postRecyclerViewAdapter = new PostRecyclerViewAdapter(activity, mRecyclerViewItems,textSize);
         }else{
             mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
-//            postRecyclerViewAdapter = new PostRecyclerViewAdapter(getActivity(), mRecyclerViewItems,textSize);
+//            postRecyclerViewAdapter = new PostRecyclerViewAdapter(activity, mRecyclerViewItems,textSize);
         }
 
 //        addNativeExpressAds();
@@ -439,13 +548,25 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
     public void  updateRecyclerViewData(PostsData postsData){
 
 
+        Log.d(TAG,"updateRecyclerViewData");
 
         if(apppend){
 
             if(isLatestFragment){
-                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
+
+                if(postsData.getLatest().size()==0){
+
+                    endOFPosts();
+                }else{
+                    mRecyclerViewItems.addAll(addColorsToPosts(postsData.getLatest()));
+                }
             }else{
-                mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
+                if(postsData.getTop().size()==0){
+                    endOFPosts();
+
+                }else{
+                    mRecyclerViewItems.addAll(addColorsToPosts(postsData.getTop()));
+                }
             }
 
             recyclerView.loadMoreComplete();
@@ -474,47 +595,53 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
     public void  categoryChanged(String categoryId) {
 
+        Log.d(TAG,"categoryChanged");
+
+
         recyclerView.setLoadingMoreEnabled(true);
 
         pageNo = 1;
         toAppendOrRefresh = false;
         apppend = false;
         initialiseRecyclerView();
-        getPosts(categoryId, false,pageNo);
+        getPosts(categoryId, type,false,pageNo,false);
 
     }
         void showAd(View view){
 
 
         mAdView = (AdView) view.findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("BCDCAE3C6F97EF417DD1D5FFB4F86E3E")
+
+                .build();
         mAdView.loadAd(adRequest);
         Log.d("Home","showAd");
 
         mAdView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
-//                Toast.makeText(getActivity(), "Ad is loaded!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "Ad is loaded!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onAdClosed() {
-//                Toast.makeText(getActivity(), "Ad is closed!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "Ad is closed!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onAdFailedToLoad(int errorCode) {
-//                Toast.makeText(getActivity(), "Ad failed to load! error code: " + errorCode, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "Ad failed to load! error code: " + errorCode, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onAdLeftApplication() {
-//                Toast.makeText(getActivity(), "Ad left application!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "Ad left application!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onAdOpened() {
-//                Toast.makeText(getActivity(), "Ad is opened!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(activity, "Ad is opened!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -559,7 +686,7 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 //                            (NativeExpressAdView) mRecyclerViewItems.get(i);
 //
 //
-//                    View child = getActivity().getLayoutInflater().inflate(R.layout.native_express_ad_container, null);
+//                    View child = activity.getLayoutInflater().inflate(R.layout.native_express_ad_container, null);
 //
 //                    final CardView cardView = (CardView)child.findViewById(R.id.ad_card_view);
 //                    final int adWidth = cardView.getWidth() - cardView.getPaddingLeft()
@@ -641,23 +768,85 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
 
 
-    public void  getPosts(String category_id, boolean toShowLoading, int pageNo)
+    public void  getPosts(final String category_id, final String type, final boolean toShowLoading, final int pageNo, boolean useCache)
     {
+
+        Log.d(TAG,"getPosts");
+        mRequestStartTime = System.currentTimeMillis(); // set the request start time just before you send the request.
+
 
         String URL = AppConfig.URL_GET_POSTS
                 +sessionManager.getSelectedLanguageId()+"/"
-                +category_id+"/"+String.valueOf(pageNo);
+                +category_id+"/"
+                +type+"/"
+                +String.valueOf(pageNo);
 
-        Volley.newRequestQueue(context).add(new CustomRequest(context,getActivity(),
-                toShowLoading, Request.Method.GET, URL,
+
+//        AppController.getInstance().getRequestQueue().getCache().invalidate(URL, true);
+
+
+//        CacheRequest cacheRequest = new CacheRequest(activity, activity,
+//                false,
+//                Request.Method.GET,
+//                URL,
+//                CommonUtilities.buildBlankParams(),
+//                CommonUtilities.buildGuestHeaders(),
+//                new Response.Listener<NetworkResponse>() {
+//                    @Override
+//                    public void onResponse(NetworkResponse response) {
+//
+//
+//                        try {
+//                            long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+//                            Log.d(TAG,"getDashBoard got responce in : "+totalRequestTime );
+//
+//                            final String jsonString = new String(response.data,
+//                                    HttpHeaderParser.parseCharset(response.headers));
+//                            JSONObject jsonObject = new JSONObject(jsonString);
+//
+//                            JsonSeparator js= new JsonSeparator(context,jsonObject);
+//
+//                            parsePostsJson(js.getData());
+//
+//
+//                        } catch (UnsupportedEncodingException | JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Toast.makeText(context, "onErrorResponse:\n\n" + error.toString(), Toast.LENGTH_SHORT).show();
+//
+//                    }
+//                });
+//
+//
+//
+//        // Add the request to the RequestQueue.
+//        AppController.getInstance().addToRequestQueue(cacheRequest);
+
+
+
+
+
+        CustomRequest jsonObjReq = new CustomRequest(context,activity,
+                toShowLoading, Request.Method.GET, URL,useCache,
                 CommonUtilities.buildBlankParams(), CommonUtilities.buildHeaders(context),
 
 
-                new com.android.volley.Response.Listener() {
+
+        new com.android.volley.Response.Listener() {
 
                     @Override
                     public void onResponse(Object response) {
 
+                        long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+
+                        Log.d(TAG,"getPosts got Responce "+type+" in time : "+totalRequestTime);
 
                         JSONObject jsonObject = (JSONObject) response;
                         JsonSeparator js= new JsonSeparator(context,jsonObject);
@@ -665,11 +854,27 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
                         try {
                             if(js.isError()){
                                 Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
-                                endOFPosts();
+//                                endOFPosts();
                             }else{
 
                                 //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
                                 parsePostsJson(js.getData());
+
+//                                if(firstTimeGetPosts){
+//
+//                                    new Handler().postDelayed(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            //Do something after 100ms
+//                                            recyclerView.refresh();
+//
+//                                            getPosts(category_id,type,toShowLoading,pageNo,false);
+//                                            firstTimeGetPosts = false;
+//                                        }
+//                                    }, 200);
+
+
+//                                }
 
                             }
                         } catch (JSONException e) {
@@ -686,19 +891,97 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
             @Override
             public void onErrorResponse(VolleyError error) {
 
-                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+//                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+
+                if (error instanceof TimeoutError || error instanceof NoConnectionError) {
+//                    CommonUtilities.showAlertDialog(context, "Internet Connection Error", "Please connect to working Internet connection", Boolean.valueOf(false));
+
+
+                    snackbar = Snackbar
+                            .make(latest_fragment, R.string.no_internet, Snackbar.LENGTH_INDEFINITE)
+                            .setAction( R.string.retry, new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Snackbar snackbar1 = Snackbar.make(latest_fragment, "Retrying!", Snackbar.LENGTH_SHORT);
+                                    snackbar1.show();
+                                    getPosts(category_id,type,toShowLoading,pageNo,false);
+                                }
+
+                            });
+
+                    snackbar.show();
+
+
+                } else if (error instanceof AuthFailureError) {
+                    //TODO
+                } else if (error instanceof ServerError) {
+                    //TODO
+                } else if (error instanceof NetworkError) {
+                    //TODO
+                } else if (error instanceof ParseError) {
+                    //TODO
+                }
+
+
+                long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+                Log.d(TAG,"getPosts got error in time : "+totalRequestTime);
 
             }
-        }));
+        });
+
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
+
+
+
+
+
+//        category_id = "null";
+//        ApiInterface apiService =
+//                ApiClient.getClient().create(ApiInterface.class);
+//
+//        Call<PostsData> call = apiService
+//                .getPosts(sessionManager.getSelectedLanguageId()
+//                        ,category_id,type
+//                        ,String.valueOf(pageNo)
+//                        ,sessionManager.getAPIKEY());
+//
+//        mRequestStartTime = System.currentTimeMillis(); // set the request start time just before you send the request.
+//
+//        call.enqueue(new Callback<PostsData>() {
+//            @Override
+//            public void onResponse(Call<PostsData>call, Response<PostsData> response) {
+////                List<Movie> movies = response.body().get();
+//                 long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+//
+//                CommonUtilities.showLongToast(context, "Retro "+String.valueOf(totalRequestTime));
+//                 Log.d(TAG,"getPosts got Responce "+type+" in time : "+totalRequestTime);
+//
+
+//                parsePostsJson(response.body());
+//            }
+//
+//            @Override
+//            public void onFailure(Call<PostsData>call, Throwable t) {
+//                // Log error here since request failed
+//                Log.e(TAG, t.toString());
+//            }
+//        });
     }
 
 
     public void  parsePostsJson(JSONObject jsonObject){
+//public void  parsePostsJson(PostsData postsData){
+
+        Log.d(TAG,"parsePostsJson");
+
+
 
         recyclerView.refreshComplete();
         isBlankRefresh = false;
 
         postsData = CommonUtilities.getObjectFromJson(jsonObject, PostsData.class);
+
+
 
         if(toAppendOrRefresh){
             updateRecyclerViewData(postsData);
@@ -712,6 +995,8 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
 
     List<PostItemData> addColorsToPosts(List<PostItemData> postItemDatas){
+
+        Log.d(TAG,"addColorsToPosts");
 
 //        List<PostItemData> postItemDataList = new ArrayList<>();
         for (PostItemData postItemData:postItemDatas) {
@@ -728,6 +1013,21 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         isBlankRefresh = false;
         recyclerView.setLoadingMoreEnabled(false);
 
+
+        snackbar = Snackbar
+                .make(latest_fragment,
+                        R.string.no_more_msgs, Snackbar.LENGTH_SHORT)
+        ;
+        snackbar.show();
+
+//        LayoutInflater inflater = (LayoutInflater)context.getSystemService
+//                (Context.LAYOUT_INFLATER_SERVICE);
+//        View view = inflater.inflate(R.layout.nav_header_home,null);
+//
+//
+//        recyclerView.addHeaderView(view);
+//        recyclerView.setFootView(view);
+
     }
 
 
@@ -740,13 +1040,150 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
         mListener = null;
     }
 
-    @Override
-    public void onItemChanged() {
 
-        postRecyclerViewAdapter.notifyDataSetChanged();
+
+    public void itemChanged(int position){
+
+        postRecyclerViewAdapter.notifyItemChanged(position+1);
+    }
+
+    @Override
+    public void onWhatsAppClicked(int position) {
+
+        PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
+
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+
+        String text = postItemData.getPost();
+        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+        sendIntent.setType("text/plain");
+        sendIntent.setPackage("com.whatsapp");
+
+        postItemData.setPost_whatsapp_count(postItemData.getPost_whatsapp_count()+1);
+        itemChanged(position);
+
+
+        activity.startActivity(sendIntent);
+        updateCount(postItemData.getId_post(), KEY_WHATSAPP);
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+        bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+        mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_SHARED_TO_WHATSAPP, bundle);
+
+
+        Log.d(TAG,"whatsapp clicked");
 
     }
 
+    @Override
+    public void onShareClicked(int position) {
+
+        PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
+
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+
+        String text = postItemData.getPost();
+        sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+        sendIntent.setType("text/plain");
+        postItemData.setPost_share_count(postItemData.getPost_share_count()+1);
+
+        activity.startActivity(sendIntent);
+
+        updateCount(postItemData.getId_post(), KEY_SHARE);
+
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+        bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+        mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_SHARED_TO_EXTERNAL, bundle);
+
+
+//                countShare.setText(String.valueOf(
+//                        (postItemDataList.get(position).getPost_share_count()+1)));
+        itemChanged(position);
+
+        Log.d(TAG,"share clicked");
+    }
+
+    @Override
+    public void onLiked(final int position) {
+
+        PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
+
+        postItemData.setIs_liked(1);
+        postItemData.setPost_likes_count(postItemData.getPost_likes_count()+1);
+        updateCount(postItemData.getId_post(), KEY_LIKE);
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+        bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+        mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_LIKED, bundle);
+
+        Log.d(TAG,"Post liked");
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                //Do something after 100ms
+                itemChanged(position);
+
+            }
+        }, 500);
+
+
+    }
+    @Override
+    public void onUnliked(final int position) {
+
+        PostItemData postItemData = (PostItemData) mRecyclerViewItems.get(position);
+
+        postItemData.setIs_liked(0);
+        postItemData.setPost_likes_count(postItemData.getPost_likes_count()-1);
+        updateCount(postItemData.getId_post(),AppConfig.KEY_UNLIKE);
+         Bundle bundle = new Bundle();
+        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemData.getId_post());
+        bundle.putString(FIREBASE_KEY_CATEGORY, postItemData.getCategory_name());
+        mFirebaseAnalytics.logEvent(FIREBASE_KEY_POST_UNLIKED, bundle);
+        Log.d(TAG,"Post uniked");
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                //Do something after 100ms
+                itemChanged(position);
+
+            }
+        }, 500);
+
+    }
+
+    @Override
+    public void onCardClicked(int position) {
+
+
+        PostItemData postItemClicked = (PostItemData) mRecyclerViewItems.get(position);
+
+
+        startActivityForResult(new Intent(activity, SwypeActivity.class)
+                                .putExtra(AppConfig.ARG_PARAM_POST_DATA,
+                                        (Serializable) mRecyclerViewItems)
+                                .putExtra(AppConfig.ARG_PARAM_POSITION,position)
+                                .putExtra(AppConfig.ARG_PARAM_CATEGORY_ID,((HomeActivity)activity).getActiveCategoryId())
+                                .putExtra(AppConfig.ARG_PARAM_TYPE,type),1
+                        );
+
+                        Bundle bundle = new Bundle();
+                        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, postItemClicked.getId_post());
+                        bundle.putString(FIREBASE_KEY_CATEGORY, postItemClicked.getCategory_name());
+                        mFirebaseAnalytics.logEvent(FIREBASE_KEY_TAPPED_ON_DETAILED_POST, bundle);
+
+
+                        Log.d(TAG,"Clicked on card");
+
+    }
 
 
     @Override
@@ -754,6 +1191,77 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         String hello;
 
+    }
+
+
+
+    void updateCount(int post_id, String what){
+
+
+        what = what.trim();
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("post_id", post_id+"");
+
+        String url = "";
+
+        if(what.equals(KEY_WHATSAPP.trim())){
+            url = URL_UPDATE_WHATSAPP_COUNT;
+        }
+        else if(what.equals(KEY_SHARE.trim()))
+        {
+            url = URL_UPDATE_SHARE_COUNT.trim();
+        }
+        else if(what.equals(KEY_LIKE.trim())){
+            url = URL_LIKE_POST;
+        }
+        else{
+            url = AppConfig.URL_UNLIKE_POST;
+        }
+
+        Log.d(TAG,"updateCount url : "+url);
+
+
+        Volley.newRequestQueue(context).add(new CustomRequest(activity,activity,
+                false, Request.Method.POST, url,false,
+                params, CommonUtilities.buildHeaders(context),
+
+
+                new com.android.volley.Response.Listener() {
+
+                    @Override
+                    public void onResponse(Object response) {
+                        JSONObject jsonObject = (JSONObject) response;
+                        JsonSeparator js= new JsonSeparator(activity,jsonObject);
+                        Log.d(TAG,"got responce");
+
+                        try {
+                            if(js.isError()){
+
+                                Toast.makeText(activity,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+                            }else{
+
+                                //JSONArray categories = js.getData().getJSONArray(Const.KEY_CATEGORIES);
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+
+
+                }, new com.android.volley.Response.ErrorListener() {
+
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG,"got error");
+
+                Toast.makeText(activity,error.toString(),Toast.LENGTH_LONG).show();
+
+            }
+        }));
     }
 
 
@@ -784,5 +1292,8 @@ public class LatestFragment extends android.support.v4.app.Fragment implements P
 
         postRecyclerViewAdapter.notifyDataSetChanged();
     }
+
+
+
 
 }

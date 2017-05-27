@@ -1,15 +1,16 @@
 package sourabh.menwillbemen.activity;
 
-import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -18,23 +19,32 @@ import android.view.View;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.Volley;
+import com.crashlytics.android.Crashlytics;
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
+import com.gitonway.lee.niftymodaldialogeffects.lib.Effectstype;
+import com.gitonway.lee.niftymodaldialogeffects.lib.NiftyDialogBuilder;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.mikepenz.community_material_typeface_library.CommunityMaterial;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
-import com.mikepenz.iconics.Iconics;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -49,6 +59,7 @@ import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItemAdapter;
 import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItems;
 import com.squareup.picasso.Picasso;
 
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -57,21 +68,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import io.fabric.sdk.android.Fabric;
 import sourabh.menwillbemen.R;
 import sourabh.menwillbemen.app.AppConfig;
+import sourabh.menwillbemen.app.AppController;
 import sourabh.menwillbemen.app.CustomRequest;
 import sourabh.menwillbemen.data.CategoryData;
 import sourabh.menwillbemen.data.LanguageData;
 import sourabh.menwillbemen.data.PostItemData;
 import sourabh.menwillbemen.data.PostsData;
 import sourabh.menwillbemen.data.SettingData;
+import sourabh.menwillbemen.data.TranslationData;
 import sourabh.menwillbemen.helper.CommonUtilities;
 import sourabh.menwillbemen.helper.JsonSeparator;
 import sourabh.menwillbemen.helper.NotificationUtils;
 import sourabh.menwillbemen.helper.SessionManager;
-import sourabh.menwillbemen.ui.CustomUrlPrimaryDrawerItem;
 
 import static android.media.CamcorderProfile.get;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_APP_SHARED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_CATEGORY;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_LANGUAGE_SELECTED;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_POST_SHARED_TO_EXTERNAL;
+import static sourabh.menwillbemen.app.AppConfig.FIREBASE_KEY_USER_ID;
+import static sourabh.menwillbemen.app.AppConfig.KEY_SHARE;
 
 
 public class HomeActivity extends BaseActivity
@@ -88,8 +108,9 @@ public class HomeActivity extends BaseActivity
     private Drawer resultAppended = null;
     Toolbar toolbar;
     Bundle savedInstanceState;
-    Bitmap bitmapIcon = null;
     List<SettingData> settingDataList;
+    List<TranslationData> translationDataList;
+
     String activeCategoryId;
     HashMap<String, String> hashMapSettings = new HashMap<>();
     SessionManager sessionManager;
@@ -103,8 +124,14 @@ public class HomeActivity extends BaseActivity
     InterstitialAd mInterstitialAd;
 
     int ad_counter = 0;
+    private long mRequestStartTime;
+    private FirebaseAnalytics mFirebaseAnalytics;
+    FloatingActionButton fab;
+    int selectedTempCategoryId;
+    NiftyDialogBuilder addPostDialog;
+    NiftyDialogBuilder feedbackDialog;
+    int emojiSelected = 0;
 
-    //            int themeColor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,6 +140,8 @@ public class HomeActivity extends BaseActivity
         this.savedInstanceState = savedInstanceState;
         context = this;
         sessionManager = new SessionManager(context);
+        Fabric.with(this, new Crashlytics());
+
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         viewPagerTab = (SmartTabLayout) findViewById(R.id.viewpagertab);
@@ -126,6 +155,7 @@ public class HomeActivity extends BaseActivity
 //        imageViewHeader = (ImageView) headerView.findViewById(imageViewHeader);
 
 
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         postsData = (PostsData) getIntent().getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA);
 
@@ -151,15 +181,24 @@ public class HomeActivity extends BaseActivity
 
 
 //        setTheme();
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setImageDrawable(new IconicsDrawable(this)
+                .icon(GoogleMaterial.Icon.gmd_add)
+                .color(Color.WHITE)
+                .sizeDp(16));
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 //                Snackbar.make(view, "Replace  with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
-//            }
-//        });
+
+
+                showOnPostDialog();
+
+
+
+            }
+        });
 
 
 //        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -191,6 +230,223 @@ public class HomeActivity extends BaseActivity
         initialiseInterstitialAd();
 
 
+
+
+
+
+    }
+
+
+
+    void showOnPostDialog(){
+
+
+
+        addPostDialog=NiftyDialogBuilder.getInstance(context);
+
+        addPostDialog
+                .withTitle(null)
+                .withDialogColor(getResources().getColor(R.color.colorPrimary))
+                .withMessage(null)
+                .setCustomView(R.layout.create_post_dialog,context)
+                .isCancelableOnTouchOutside(true)
+                .withDuration(700)
+                .withEffect(Effectstype.Fliph).show();   //def Effectstype.Slidetop
+
+
+
+
+
+        final TextView txtLanguage = (TextView) addPostDialog.findViewById(R.id.txtLanguage);
+        final TextView txtCategory = (TextView) addPostDialog.findViewById(R.id.txtCategory);
+        final TextView txtPost = (TextView) addPostDialog.findViewById(R.id.txtPost);
+        Button btnSubmit = (Button) addPostDialog.findViewById(R.id.btnAddPost);
+
+
+
+        txtLanguage.setText(sessionManager.getSelectedLanguageTitle());
+        txtLanguage.setCompoundDrawablesWithIntrinsicBounds(
+
+                null,null,
+                new IconicsDrawable(context)
+                        .icon(GoogleMaterial.Icon.gmd_list)
+                        .color(getResources().getColor(R.color.colorAccent))
+                        .sizeDp(20), null);
+
+//                txtLanguage.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View view) {
+//
+//                        final List<LanguageData> languageDataList = (sessionManager.getLangauges());
+//                        String []languages = CommonUtilities.convertLangaugeListToLanguageArray
+//                                (languageDataList);
+//
+//                        new MaterialDialog.Builder(context)
+//                                .title("Choose Language")
+//                                .cancelable(true )
+//                                .items(languages)
+//                                .itemsCallbackSingleChoice(-1, new MaterialDialog.ListCallbackSingleChoice() {
+//                                    @Override
+//                                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+//
+//
+//                                        LanguageData selectedLanguageData = languageDataList.get(which);
+//                                        txtLanguage.setText(selectedLanguageData.getLanguage_title());
+//
+//
+//                                        return true;
+//                                    }
+//                                })
+////                        .positiveText("Choose")
+//                                .show();
+//                    }
+//                });
+
+//                txtCategory.setText(sessionManager.getSelectedLanguageTitle());
+
+        txtCategory.setCompoundDrawablesWithIntrinsicBounds(
+                null,null,
+
+                new IconicsDrawable(context)
+                        .icon(GoogleMaterial.Icon.gmd_list)
+                        .color(getResources().getColor(R.color.colorAccent))
+                        .sizeDp(20), null);
+
+        txtCategory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                String []categories = CommonUtilities.convertCategoryListToCategoryArray(categoryDataList);
+
+                new MaterialDialog.Builder(context)
+                        .title("Choose Language")
+                        .cancelable(true )
+                        .items(categories)
+                        .itemsCallbackSingleChoice(-1, new MaterialDialog.ListCallbackSingleChoice() {
+                            @Override
+                            public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+
+
+                                CategoryData selectedCategoryData = categoryDataList.get(which);
+                                txtCategory.setText(selectedCategoryData.getCategory_name());
+                                selectedTempCategoryId = selectedCategoryData.getId_category();
+
+                                return true;
+                            }
+                        })
+//                        .positiveText("Choose")
+                        .show();
+            }
+        });
+
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if(txtCategory.getText().toString().equals("")){
+
+                    YoYo.with(Techniques.Tada)
+                            .duration(700)
+                            .repeat(1)
+                            .playOn(txtCategory);
+
+                }else if(txtPost.getText().toString().equals("")) {
+                    YoYo.with(Techniques.Tada)
+                            .duration(700)
+                            .repeat(1)
+                            .playOn(txtPost);
+                }
+                else
+                {
+                    submitPost(sessionManager.getSelectedLanguageId()
+                            ,selectedTempCategoryId,txtPost.getText().toString());
+                }
+
+            }
+        });
+    }
+
+    void submitPost(int language_id,int category_id,String post)
+    {
+        Log.d(TAG,"submitPost");
+
+        Map<String, String> params = new HashMap<>();
+
+        params.put("language_id", String.valueOf(language_id));
+        params.put("category_id", String.valueOf(category_id));
+        params.put("post", String.valueOf(post));
+
+
+
+
+        CustomRequest jsonObjReq = new CustomRequest(this,this,
+                true, Request.Method.POST,
+                AppConfig.URL_ADD_POST, false,
+                params, CommonUtilities.buildHeaders(context),
+
+
+                new com.android.volley.Response.Listener() {
+
+                    @Override
+                    public void onResponse(Object response) {
+
+                        Log.d(TAG,"submitPost got responce");
+
+                        JSONObject jsonObject = (JSONObject) response;
+                        JsonSeparator js= new JsonSeparator(context,jsonObject);
+
+                        try {
+                            if(js.isError()){
+
+                                new MaterialDialog.Builder(context)
+                                        .title("Failed")
+                                        .content("Your message failed to submitted, Please try again")
+                                        .positiveText("Close")
+                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                            @Override
+                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                addPostDialog.dismiss();
+                                            }
+                                        })
+                                        .show();
+//                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+                            }else{
+
+
+                                new MaterialDialog.Builder(context)
+                                        .title("Submitted")
+                                        .content("Your message is submitted, it will be added soon.")
+                                        .positiveText("Done")
+
+                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                            @Override
+                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                addPostDialog.dismiss();
+                                            }
+                                        })
+                                        .show();
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+
+
+                }, new com.android.volley.Response.ErrorListener() {
+
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+
+            }
+        });
+
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
 
 //        void    setTheme(){
@@ -218,6 +474,7 @@ public class HomeActivity extends BaseActivity
 
 //initialize and create the image loader logic
 
+        Log.d(TAG,"setupDrawer");
 
 
 
@@ -305,6 +562,9 @@ public class HomeActivity extends BaseActivity
                                         break;
                                     case 5:
 //                                        Toast.makeText(HomeActivity.this, "Feedback", Toast.LENGTH_SHORT).show();
+
+                                        openFeedbackDialog();
+
                                         break;
 
 
@@ -447,12 +707,143 @@ public class HomeActivity extends BaseActivity
 
 
 
-        Log.d("Home","Drawer");
+
+
+    }
+
+    private void openFeedbackDialog() {
+
+        feedbackDialog=NiftyDialogBuilder.getInstance(context);
+
+        feedbackDialog
+                .withTitle(null)
+                .withDialogColor(getResources().getColor(R.color.colorPrimary))
+                .withMessage(null)
+                .setCustomView(R.layout.feedback_dialog,context)
+                .isCancelableOnTouchOutside(true)
+                .withDuration(700)
+                .withEffect(Effectstype.Fliph).show();   //def Effectstype.Slidetop
+
+        feedbackDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                emojiSelected = 0;
+            }
+        });
+
+        final EditText txtFeedBack = (EditText) feedbackDialog.findViewById(R.id.txtFeedback);
+        final ImageButton feedback_1 = (ImageButton) feedbackDialog.findViewById(R.id.feedback_1);
+        final ImageButton feedback_2 = (ImageButton) feedbackDialog.findViewById(R.id.feedback_2);
+        final ImageButton feedback_3 = (ImageButton) feedbackDialog.findViewById(R.id.feedback_3);
+        final ImageButton feedback_4 = (ImageButton) feedbackDialog.findViewById(R.id.feedback_4);
+        final ImageButton feedback_5 = (ImageButton) feedbackDialog.findViewById(R.id.feedback_5);
+        final Button btnSubmit = (Button) feedbackDialog.findViewById(R.id.btnAddFeedback);
+        final LinearLayout layout_emojies = (LinearLayout) feedbackDialog.findViewById(R.id.layout_emojies);
+
+
+        feedback_1.setAlpha(128);
+        feedback_2.setAlpha(128);
+        feedback_3.setAlpha(128);
+        feedback_4.setAlpha(128);
+        feedback_5.setAlpha(128);
+
+        feedback_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojiSelected = 1;
+                feedback_1.setAlpha(255);
+                feedback_2.setAlpha(128);
+                feedback_3.setAlpha(128);
+                feedback_4.setAlpha(128);
+                feedback_5.setAlpha(128);
+
+            }
+        });
+        feedback_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojiSelected = 2;
+
+                feedback_1.setAlpha(128);
+                feedback_2.setAlpha(255);
+                feedback_3.setAlpha(128);
+                feedback_4.setAlpha(128);
+                feedback_5.setAlpha(128);
+
+            }
+        });
+        feedback_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojiSelected = 3;
+
+                feedback_1.setAlpha(128);
+                feedback_2.setAlpha(128);
+                feedback_3.setAlpha(255);
+                feedback_4.setAlpha(128);
+                feedback_5.setAlpha(128);
+
+            }
+        });
+        feedback_4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojiSelected = 4;
+
+                feedback_1.setAlpha(128);
+                feedback_2.setAlpha(128);
+                feedback_3.setAlpha(128);
+                feedback_4.setAlpha(255);
+                feedback_5.setAlpha(128);
+
+            }
+        });
+        feedback_5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                emojiSelected = 5;
+
+                feedback_1.setAlpha(128);
+                feedback_2.setAlpha(128);
+                feedback_3.setAlpha(128);
+                feedback_4.setAlpha(128);
+                feedback_5.setAlpha(255);
+
+            }
+        });
+
+
+        btnSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if(txtFeedBack.getText().toString().equals("")){
+
+                    YoYo.with(Techniques.Tada)
+                            .duration(700)
+                            .repeat(1)
+                            .playOn(txtFeedBack);
+                }
+                else if(emojiSelected == 0){
+
+                    YoYo.with(Techniques.Tada)
+                            .duration(700)
+                            .repeat(1)
+                            .playOn(layout_emojies);
+
+                }
+                else{
+                    submitFeedBack(emojiSelected,txtFeedBack.getText().toString());
+                }
+            }
+        });
 
 
     }
 
     void loadHeaderFooter(ImageView imageViewHeader,String url){
+
+        Log.d(TAG,"loadHeaderFooter "+url);
 
         Picasso.with(context)
                 .load(url)
@@ -460,7 +851,7 @@ public class HomeActivity extends BaseActivity
                     @Override
                     public void onSuccess() {
 
-                        Log.d("Home","headerfooter");
+                        Log.d(TAG,"headerfooter loaded");
 
 //                        Toast.makeText(context,"Loaded",Toast.LENGTH_SHORT).show();;
                     }
@@ -472,6 +863,90 @@ public class HomeActivity extends BaseActivity
                     }
                 });
 
+
+    }
+
+
+    void submitFeedBack(int emojiSelected, String feedback){
+
+        Log.d(TAG,"submitFeedBack");
+
+        Map<String, String> params = new HashMap<>();
+
+        params.put("emoji", String.valueOf(emojiSelected));
+        params.put("feedback", String.valueOf(feedback));
+
+
+
+
+        CustomRequest jsonObjReq = new CustomRequest(this,this,
+                true, Request.Method.POST,
+                AppConfig.URL_SUBMIT_FEEDBACK,false,
+                params, CommonUtilities.buildHeaders(context),
+
+
+                new com.android.volley.Response.Listener() {
+
+                    @Override
+                    public void onResponse(Object response) {
+
+                        Log.d(TAG,"submitFeedBack got responce");
+
+                        JSONObject jsonObject = (JSONObject) response;
+                        JsonSeparator js= new JsonSeparator(context,jsonObject);
+
+                        try {
+                            if(js.isError()){
+
+                                new MaterialDialog.Builder(context)
+                                        .title(getString(R.string.failed))
+                                        .content(getString(R.string.feedback_failed))
+                                        .positiveText(getString(R.string.close))
+                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                            @Override
+                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                feedbackDialog.dismiss();
+                                            }
+                                        })
+                                        .show();
+//                                Toast.makeText(context,js.getMessage().toString(),Toast.LENGTH_LONG).show();
+                            }else{
+
+
+                                new MaterialDialog.Builder(context)
+                                        .title(getString(R.string.thank_you))
+                                        .content(getString(R.string.feedback_submitted))
+                                        .positiveText(getString(R.string.done))
+
+                                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                            @Override
+                                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                feedbackDialog.dismiss();
+                                            }
+                                        })
+                                        .show();
+
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+
+
+                }, new com.android.volley.Response.ErrorListener() {
+
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
+
+            }
+        });
+
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
 
     }
 
@@ -535,6 +1010,9 @@ public class HomeActivity extends BaseActivity
 
     void   setFragments(String first_fragment_title, String second_fragment_title){
 
+        Log.d(TAG,"setFragments");
+
+
         Bundle argsLatest = new Bundle();
         Bundle argsTop = new Bundle();
 
@@ -565,16 +1043,26 @@ public class HomeActivity extends BaseActivity
 
     public void getDashBoard()
     {
-        Volley.newRequestQueue(this).add(new CustomRequest(this,this,
+
+        Log.d(TAG,"getDashBoard");
+        mRequestStartTime = System.currentTimeMillis(); // set the request start time just before you send the request.
+
+        CustomRequest jsonObjReq  = new CustomRequest(this,this,
                 true, Request.Method.GET,
                 AppConfig.URL_GET_DASHBOARD+sessionManager.getSelectedLanguageId(),
+                false,
                 CommonUtilities.buildBlankParams(), CommonUtilities.buildGuestHeaders(),
+
 
 
                 new com.android.volley.Response.Listener() {
 
                     @Override
                     public void onResponse(Object response) {
+
+                        long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+                        Log.d(TAG,"getDashBoard got responce in : "+totalRequestTime);
+
                         JSONObject jsonObject = (JSONObject) response;
                         JsonSeparator js= new JsonSeparator(context,jsonObject);
 
@@ -602,10 +1090,16 @@ public class HomeActivity extends BaseActivity
             @Override
             public void onErrorResponse(VolleyError error) {
 
+
+                long totalRequestTime = System.currentTimeMillis() - mRequestStartTime;
+                Log.d(TAG,"getDashBoard got error in : "+totalRequestTime);
+
                 Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
 
             }
-        }));
+        });
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
+
     }
 
 
@@ -676,17 +1170,23 @@ public class HomeActivity extends BaseActivity
 
 
     public void parseDashBoardJson(JSONObject jsonObject){
+        Log.d(TAG,"parseDashBoardJson");
+
         postsData = CommonUtilities.getObjectFromJson(jsonObject, PostsData.class);
-
-
         parseDashBoardData();
 
     }
 
     public  void parseDashBoardData(){
 
+        Log.d(TAG,"parseDashBoardData");
+
+
         categoryDataList = postsData.getCategories();
         settingDataList = postsData.getSettings();
+
+//        translationDataList = postsData.getTranslations();
+//        sessionManager.setTranslation(translationDataList);
 
         sessionManager.setCardColors(postsData.getCard_colors());
         try {
@@ -754,6 +1254,7 @@ public class HomeActivity extends BaseActivity
 
     void initialiseInterstitialAd(){
 
+        Log.d(TAG,"initialiseInterstitialAd");
 
         mInterstitialAd = new InterstitialAd(this);
 
@@ -761,6 +1262,8 @@ public class HomeActivity extends BaseActivity
         mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("BCDCAE3C6F97EF417DD1D5FFB4F86E3E")
+
                 .build();
 
         // Load ads into Interstitial Ads
@@ -850,10 +1353,24 @@ public class HomeActivity extends BaseActivity
                     @Override
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
 
-                        sessionManager.setSelectedLanguageId(languageDataList.get(which).getId_language());
+
+                        LanguageData selectedLanguageData = languageDataList.get(which);
+                        FirebaseMessaging.getInstance().unsubscribeFromTopic(sessionManager.getSelectedLanguageCode());
+
+                        Bundle bundle = new Bundle();
+                        bundle.putInt(FirebaseAnalytics.Param.ITEM_ID, selectedLanguageData.getId_language());
+                        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, selectedLanguageData.getLanguage_title());
+                        mFirebaseAnalytics.logEvent(FIREBASE_KEY_LANGUAGE_SELECTED, bundle);
+                        mFirebaseAnalytics.setUserProperty(FIREBASE_KEY_LANGUAGE_SELECTED, selectedLanguageData.getLanguage_title());
+
+                        FirebaseMessaging.getInstance().subscribeToTopic(languageDataList.get(which).getLanguage_code());
+                        sessionManager.setSelectedLanguage(
+                                selectedLanguageData.getId_language(),
+                                selectedLanguageData.getLanguage_title(),
+                                selectedLanguageData.getLanguage_code());
 
                         getDashBoard();
-//                                gotoHome(null);
+
                         return true;
                     }
                 })
@@ -906,6 +1423,8 @@ public class HomeActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+
+        Log.d(TAG,"onResume");
 
         // register GCM registration complete receiver
         LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
@@ -965,40 +1484,42 @@ public class HomeActivity extends BaseActivity
     {
 
 
+        Log.d(TAG,"RegisterUser");
 
         Map<String, String> params = new HashMap<>();
-        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_CONTACTS))
-        {
-            params.put("fname", CommonUtilities.getUserFnameLname(context));
-            params.put("lname", CommonUtilities.getUserFnameLname(context));
+//        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_CONTACTS))
+//        {
+//            params.put("fname", CommonUtilities.getUserFnameLname(context));
+//            params.put("lname", CommonUtilities.getUserFnameLname(context));
+//
+//        }
+//        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.GET_ACCOUNTS)){
+//            params.put("email", CommonUtilities.getGmailAccount(context));
+//        }
 
-        }
-        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.GET_ACCOUNTS)){
-            params.put("email", CommonUtilities.getGmailAccount(context));
-        }
+//        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_PHONE_STATE)){
+//
+//            String phone =CommonUtilities.getPhoneNumber(context);
+//            String device_id = CommonUtilities.getDeviceID(context);
+//
+//            if(phone != null)
+//                params.put("phone", phone);
+//
+//            if(device_id != null)
+//                params.put("device_id", device_id);
+//
+//
+//        }
 
-        if(CommonUtilities.isPermissionGranted(context, Manifest.permission.READ_PHONE_STATE)){
-
-            String phone =CommonUtilities.getPhoneNumber(context);
-            String device_id = CommonUtilities.getDeviceID(context);
-
-            if(phone != null)
-                params.put("phone", phone);
-
-            if(device_id != null)
-                params.put("device_id", device_id);
-
-
-        }
+        params.put("device_id", CommonUtilities.getUniqueAndroidDeviceId(context));
 
         params.put("firebase_reg_id", sessionManager.getFCMToken());
 
 
 
-
-        Volley.newRequestQueue(this).add(new CustomRequest(this,this,
+        CustomRequest jsonObjReq = new CustomRequest(this,this,
                 false, Request.Method.POST,
-                AppConfig.URL_REGISTER,
+                AppConfig.URL_REGISTER,false,
                 params, CommonUtilities.buildGuestHeaders(),
 
 
@@ -1006,6 +1527,9 @@ public class HomeActivity extends BaseActivity
 
                     @Override
                     public void onResponse(Object response) {
+
+                        Log.d(TAG,"RegisterUser got responce");
+
                         JSONObject jsonObject = (JSONObject) response;
                         JsonSeparator js= new JsonSeparator(context,jsonObject);
 
@@ -1042,21 +1566,29 @@ public class HomeActivity extends BaseActivity
                 Toast.makeText(context,error.toString(),Toast.LENGTH_LONG).show();
 
             }
-        }));
+        });
+
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
 
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        Log.d(TAG,"onActivityResults");
+
         if (requestCode == 1) {
 
-
+            if(data != null){
 
                 ((LatestFragment) getSupportFragmentManager().getFragments().get(0))
                         .postDataUpdatedFromDetailedScreen((List<PostItemData>) data.getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA));
 
                 ((LatestFragment) getSupportFragmentManager().getFragments().get(1))
                         .postDataUpdatedFromDetailedScreen((List<PostItemData>) data.getSerializableExtra(AppConfig.ARG_PARAM_POST_DATA));;
+
+            }
+
 
 
 
@@ -1065,10 +1597,12 @@ public class HomeActivity extends BaseActivity
 
 
 
-//    public PostsData getPostsDataFromActivity() {
-//        return postsData;
-//    }
-
+    public void hideFab() {
+        fab.hide();
+    }
+    public void showFab() {
+        fab.show();
+    }
 
 
 //    @Override
@@ -1164,6 +1698,9 @@ public class HomeActivity extends BaseActivity
                 .color(Color.WHITE)
                 .sizeDp(20));
 
+
+
+
         return true;
     }
 
@@ -1176,6 +1713,35 @@ public class HomeActivity extends BaseActivity
             resultAppended.openDrawer(); /*Opens the Right Drawer*/
             return true;
         }
+
+        if (id == R.id.action_share) {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+
+            String text = "Download App";
+            sendIntent.putExtra(Intent.EXTRA_TEXT, text+"\n\n"+"Men Will Be Men ");
+            sendIntent.setType("text/plain");
+
+            startActivity(sendIntent);
+
+
+
+            Bundle bundle = new Bundle();
+            bundle.putString(FIREBASE_KEY_USER_ID, sessionManager.getUserId());
+            mFirebaseAnalytics.logEvent(FIREBASE_KEY_APP_SHARED, bundle);
+
+
+//                countShare.setText(String.valueOf(
+//                        (postItemDataList.get(position).getPost_share_count()+1)));
+
+            Log.d(TAG,"share clicked");
+
+            return true;
+        }
+
+
+
+
 
         return super.onOptionsItemSelected(item);
     }

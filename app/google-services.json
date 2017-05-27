@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "274969105889-08hmn8o117a4vpbgl5uhinfu28iojkut.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "sourabh.menwillbemen",
+            "certificate_hash": "1ca03107e2af582f7929b8386860b8e32579484e"
+          }
+        },
+        {
           "client_id": "274969105889-ucf4g6mtuvn3po5mba3341mgu09tuuhg.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

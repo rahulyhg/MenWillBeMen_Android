@@ -11,6 +11,7 @@ public class LanguageData implements Serializable{
 
     Integer id_language;
     String language_title;
+    String language_code;
 
     List<LanguageData> languages;
 
@@ -38,4 +39,11 @@ public class LanguageData implements Serializable{
         this.language_title = language_title;
     }
 
+    public String getLanguage_code() {
+        return language_code;
+    }
+
+    public void setLanguage_code(String language_code) {
+        this.language_code = language_code;
+    }
 }

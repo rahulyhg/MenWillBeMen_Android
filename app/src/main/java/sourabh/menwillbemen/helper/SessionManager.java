@@ -22,6 +22,7 @@ import java.util.Set;
 import sourabh.menwillbemen.app.AppConfig;
 import sourabh.menwillbemen.data.LanguageData;
 import sourabh.menwillbemen.data.SettingData;
+import sourabh.menwillbemen.data.TranslationData;
 
 import static android.R.attr.id;
 import static android.provider.CallLog.Calls.NEW;
@@ -49,7 +50,11 @@ public class SessionManager {
 	private static final String KEY_BACKGROUND_IMAGE = "background_image";
 	private static final String KEY_FIRST_RUN = "first_run";
 	private static final String KEY_LANGUAGES = "languages";
-	private static final String KEY_LANGUAGE_ID = "id";
+	private static final String KEY_LANGUAGE_ID = "language_id";
+	private static final String KEY_LANGUAGE_TITLE = "language_title";
+	private static final String KEY_LANGUAGE_CODE = "language_code";
+	private static final String KEY_TRANSLATION = "translation";
+
 	private static final String KEY_FCM_TOKEN = "fcm_token";
 
 	private static final String KEY_CITY_NAME = "city_name";
@@ -157,9 +162,12 @@ public class SessionManager {
 
 	}
 
-	public void setSelectedLanguageId(int id)
+	public void setSelectedLanguage(int id, String language_title, String language_code)
 	{
 		editor.putInt(KEY_LANGUAGE_ID,id);
+		editor.putString(KEY_LANGUAGE_TITLE,language_title);
+		editor.putString(KEY_LANGUAGE_CODE,language_code);
+
 		editor.commit();
 
 	}
@@ -167,6 +175,17 @@ public class SessionManager {
 	public int getSelectedLanguageId()
 	{
 		return pref.getInt(KEY_LANGUAGE_ID,1) ;
+	}
+
+	public String getSelectedLanguageCode()
+	{
+		return pref.getString(KEY_LANGUAGE_CODE,"en") ;
+	}
+
+	public String getSelectedLanguageTitle()
+	{
+		return pref.getString(KEY_LANGUAGE_TITLE
+				,"en") ;
 	}
 
 	public List<LanguageData> getLangauges(){
@@ -245,6 +264,27 @@ public class SessionManager {
 		return pref.getString(KEY_FCM_TOKEN,"") ;
 
 	}
+
+	public void setTranslation(List<TranslationData> translationDataList)
+	{
+		String json = new Gson().toJson(translationDataList);
+
+		editor.putString(KEY_TRANSLATION,json);
+
+	}
+
+//	public List<TranslationData>  getTranslation()
+//	{
+//		try {
+//			JSONObject jsonObject = new JSONObject( pref.getString(KEY_TRANSLATION,"")) ;
+//			new Gson().fr
+//
+//		} catch (JSONException e) {
+//			e.printStackTrace();
+//		}
+//
+//
+//	}
 
 	public void setCardColors(List<SettingData> cardColorsDataList)
 	{

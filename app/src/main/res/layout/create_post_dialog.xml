@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="15dp"
+    android:clipToPadding="false"
+    android:id="@+id/rootView"
+    >
+
+
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="20dp"
+    android:elevation="10dp"
+    android:background="@color/colorText">
+   <RelativeLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content">
+
+       <TextView
+           android:text="@string/add_message"
+           android:id="@+id/rank_dialog_text1"
+           android:textSize="18dp"
+           android:padding="10dp"
+           android:background="@color/colorPrimary"
+           android:textColor="@color/colorWhite"
+           android:layout_width="match_parent"
+           android:gravity="center"
+           android:layout_height="wrap_content"
+           android:layout_gravity="center"/>
+
+
+   </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+
+
+    <!--<de.hdodenhof.circleimageview.CircleImageView-->
+        <!--android:layout_width="120dp"-->
+        <!--android:layout_height="120dp"-->
+        <!--android:id="@+id/profileimage"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:src="@drawable/add_profile_pic"-->
+        <!--/>-->
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:textColor="@color/colorButtonsBlack"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:hint="@string/select_language"
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:singleLine="true"
+            android:paddingBottom="10dp"
+            android:id="@+id/txtLanguage"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@drawable/bg_parent_rounded_corner"
+            />
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:textColor="@color/colorButtonsBlack"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:hint="@string/select_category"
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:singleLine="true"
+            android:paddingBottom="10dp"
+            android:id="@+id/txtCategory"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@drawable/bg_parent_rounded_corner"
+            />
+
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:textColor="@color/colorButtonsBlack"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:hint="@string/enter_message"
+            android:paddingRight="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:singleLine="true"
+            android:paddingBottom="10dp"
+            android:id="@+id/txtPost"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:inputType="textMultiLine"
+            android:ems="10"
+            android:background="@drawable/bg_parent_rounded_corner"
+
+            />
+
+
+
+
+
+        <Button
+            android:id="@+id/btnAddPost"
+            android:layout_height="40dp"
+            android:text="@string/submit"
+            android:textAllCaps="false"
+            android:focusable="false"
+            android:textColor="@color/colorText"
+            android:textSize="16dp"
+            android:padding="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/colorAccent"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"/>
+    </LinearLayout>
+</ScrollView>
+
+
+</LinearLayout>
+
+</FrameLayout>

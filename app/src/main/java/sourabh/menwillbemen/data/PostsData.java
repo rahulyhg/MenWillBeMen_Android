@@ -1,14 +1,7 @@
 package sourabh.menwillbemen.data;
 
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.TextView;
-
 import java.io.Serializable;
 import java.util.List;
-
-import sourabh.menwillbemen.R;
-import sourabh.menwillbemen.data.PostItemData;
 
 public class PostsData implements Serializable {
 
@@ -18,6 +11,15 @@ public class PostsData implements Serializable {
     private List<SettingData> settings = null;
     private List<SettingData> card_colors = null;
     private List<LanguageData> languages = null;
+    private List<TranslationData> translations = null;
+
+    public List<TranslationData> getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(List<TranslationData> translations) {
+        this.translations = translations;
+    }
 
     public List<SettingData> getCard_colors() {
         return card_colors;
